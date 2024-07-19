@@ -1,0 +1,67 @@
+{% extends 'core/base.html' %}
+{% load i18n static %}
+
+{% block head_title %}{% trans "Map of hosts" %}{% endblock %}
+
+{% block extra_js %}
+        <script src="{% static 'maps/mapbox-gl.eo.js' %}"></script>
+        <script src="{% static 'maps/world-map.js' %}"></script>
+{% endblock %}
+{% block extra_head %}
+        <link rel="stylesheet" href="{{ MAPBOX_GL_CSS }}" crossorigin="anonymous"
+              integrity="{{ MAPBOX_GL_CSS_INTEGRITY }}" referrerpolicy="origin-when-cross-origin">
+        <script src="{{ MAPBOX_GL_JS }}" crossorigin="anonymous"
+                integrity="{{ MAPBOX_GL_JS_INTEGRITY }}" referrerpolicy="origin-when-cross-origin" {% if 'defer' in request.GET.accelerate %}defer{% endif %}></script>
+        <script src="{% url 'gis_endpoints' %}?format=js&type=world"></script>
+{% endblock %}
+
+{% block header_class %} world-map{% endblock %}
+
+{% block messages %}{# don't display any messages on this page, only the header. #}{% endblock %}
+
+{% block pre-page %}
+    <div id="map" role="main">
+        <div class="container hidden" id="webgl-warning" data-nosnippet>
+            <div class="row" style="margin-top: 52px;">
+                <div class="col-xs-12 col-sm-8 col-sm-push-2 text-center">
+                    <div class="alert alert-small alert-danger">
+                        {% trans "Map unfortunately cannot be displayed" %}
+                    </div>
+                </div>
+                <div class="col-xs-12 col-sm-8 col-sm-push-2 text-center hidden" id="webgl-unavailable">
+                    {% blocktrans trimmed asvar webgl_unavailable_text %}
+                        Your browser does not support the WebGL technology.
+                    {% endblocktrans %}
+                    <p class="help-block" data-content="{{ webgl_unavailable_text|escape }}"></p>
+                </div>
+                <div class="col-xs-12 col-sm-8 col-sm-push-2 text-center hidden" id="webgl-disabled">
+                    {% blocktrans trimmed asvar webgl_disabled_text %}
+                        Your browser supports the WebGL technology, but it is disabled or cannot be used on this system.
+                        Please check the configuration of your browser.
+                        This could also be caused by incompatible or old video drivers.
+                    {% endblocktrans %}
+                    <p class="help-block" data-content="{{ webgl_disabled_text|escape }}"></p>
+                </div>
+                <div class="col-xs-12 col-sm-8 col-sm-push-2 text-center" id="webgl-solution">
+                    {% blocktrans with url="https://get.webgl.org/" trimmed asvar webgl_solution_text %}
+                        Visit <a href="{{ url }}">Get WebGL</a> to look for a solution,
+                        or try installing the latest version of the browser.
+                    {% endblocktrans %}
+                    <p class="help-block" data-content="{{ webgl_solution_text|escape }}"></p>
+                </div>
+            </div>
+        </div>
+        <noscript>
+            <br />
+            <div class="alert alert-small alert-danger text-center" data-nosnippet>
+                {% trans "The map requires JavaScript and the WebGL technology." %}
+            </div>
+            <br />
+        </noscript>
+    </div>
+{% endblock %}
+{% block page_role %}{# NONE: content is in pre-page. #}{% endblock %}
+
+{% block footer %}{% endblock %}
+{% block footer_role %}{# NONE: footer is empty here. #}{% endblock %}
+{% block footer_class %} world-map{% endblock %}

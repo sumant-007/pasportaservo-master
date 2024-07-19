@@ -1,0 +1,15 @@
+{% extends 'core/base_hero.html' %}
+{% load i18n %}
+
+{% block head_title %}{% trans "Server error" %} &bull; {{ block.super }}{% endblock %}
+
+{% block hero_title %}403{% endblock %}
+{% block hero_subtitle %}
+    {% if exception %}
+        {{ exception }}
+    {% else %}
+        {% trans "No no, that page is off-limits" %}
+    {% endif %}
+{% endblock %}
+
+{% block hero_content %}{% endblock %}

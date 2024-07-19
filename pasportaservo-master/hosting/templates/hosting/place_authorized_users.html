@@ -1,0 +1,83 @@
+{% extends 'core/base_crispy_form.html' %}
+{% load i18n %}
+{% load next from utils %}
+{% load avatar_dimension from profile %}
+
+{% block head_title %}{% trans "Authorized users" %}: {{ place }}{% endblock %}
+
+{% block page %}
+    {% next 'next page' url_only=True as next_page_url %}
+    {% next next_page_url as next_page_param %}
+    {{ block.super }}
+{% endblock %}
+
+{% block form_action %}{% url 'authorize_user' pk=place.pk %}{% if next_page_url %}?{{ next_page_param }}{% endif %}{% endblock %}
+{% block form_container_class %}col-xs-12 col-md-6 col-md-offset-3 hidden-print{% endblock %}
+{% block form_submit_button %}<span class="fa fa-plus" aria-hidden="true"></span> {% trans "Authorize" %}{% endblock %}
+
+{% block form_before %}
+    <h1 class="text-center">{% trans "Authorized users" %}</h1>
+    <p class="col-xs-12 col-md-8 col-md-offset-2 text-center lead">
+        {% trans "Authorized users can see your full address, family members and telephone numbers." %}
+        {% trans "Your email still remains private." %}
+    </p>
+    <p class="col-xs-12 col-md-8 col-md-offset-2 text-center visible-print-block">
+        {{ place }}
+    </p>
+{% endblock form_before %}
+
+{% block form_back_link %}
+    {% url 'place_detail' place.pk  as place_page_url %}
+    <a href="{{ next_page_url|default:place_page_url }}"
+       class="btn btn-default"
+       title="{% if back_to %}{% blocktrans %}Back to {{ back_to }}{% endblocktrans %}{% else %}{% trans "Back" %}{% endif %}">
+        <span class="fa fa-arrow-left" aria-hidden="true"></span>
+        <span class="hidden-xxs">{% trans "Back" %}</span>
+    </a>
+{% endblock %}
+
+{% block form_after %}
+    <div class="clearfix"></div>
+
+    {% url 'authorize_user' place.pk  as auth_form_url %}
+    {% for auth_user, auth_form in authorized_set %}
+        <div class="col-xs-12 col-md-6 col-md-offset-3">
+            <form method="POST" action="{{ auth_form_url }}{% if next_page_url %}?{{ next_page_param }}{% endif %}">
+                <p class="col-xs-12 well authorized-user">
+                    <span class="avatar">
+                        <img src="{{ auth_user.profile.avatar_url }}" {{ auth_user.profile|avatar_dimension }} alt="[{% trans "avatar" %}]" />
+                    </span>
+                    <span class="name">
+                        <a href="{{ auth_user.profile.get_absolute_url }}">
+                            {% comment %}
+                                TODO: don't allow to add deleted users
+                                TODO: link to deleted profiles (grey link) only for supervisors
+                                TODO: when typing, should perform a db query (via chosen?) and show pictures
+                            {% endcomment %}
+                            {% if auth_user.profile.deleted_on %}
+                                <del datetime="{{ auth_user.profile.modified|date:"Y-m-d" }}" title="{% trans "Deleted profile" %}">
+                            {% endif %}
+                                {{ auth_user.profile.get_fullname_display }}
+                            {% if auth_user.profile.deleted_on %}
+                                </del>
+                            {% endif %}
+                        </a>
+                    </span>
+                    {% csrf_token %}
+                    {{ auth_form }}
+                    <button type="submit" class="control-buttons btn btn-sm btn-danger pull-right"
+                            title="{% trans "Remove user" %}" data-toggle="tooltip">
+                        <span class="fa fa-times fa-lg" aria-hidden="true"></span>
+                        <span class="sr-only">{% trans "Remove user" %}</span>
+                    </button>
+                </p>
+            </form>
+        </div>
+    {% empty %}
+        <div class="col-xs-12 col-md-6 col-md-offset-3 text-center visible-print-block">
+            <i>{% trans "No users found" %}.</i>
+            <br />
+            <i>{% trans "Full details viewable by:" %} {% trans "only supervisors" %}.</i>
+        </div>
+    {% endfor %}
+{% endblock form_after %}

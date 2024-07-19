@@ -1,0 +1,292 @@
+{% extends 'core/base.html' %}
+{% load i18n static variable cache crispy_forms_tags geoformat %}
+{% load mult compact next from utils %}
+
+{% block head_title %}
+    {% if view.query %}
+        {% asvar where_to_look %}
+            {{ view.result|format_geo_result|default:view.cleaned_query.strip }}
+        {% endasvar %}
+        {% if filter.form.cleaned_data.available %}
+            {% if view.country_search or view.inhabited_place_search %}
+                {% blocktrans %}Find accommodation in {{ where_to_look }}{% endblocktrans %}
+            {% else %}
+                {% blocktrans %}Find accommodation at {{ where_to_look }}{% endblocktrans %}
+            {% endif %}
+            {% if 'max_night' in filtered_by %}
+                {% blocktrans count number=filter.form.cleaned_data.max_night trimmed %}
+                    for {{ number }} night
+                {% plural %}
+                    for {{ number }} nights
+                {% endblocktrans %}
+            {% endif %}
+        {% else %}
+            {% if view.country_search or view.inhabited_place_search %}
+                {% if 'tour_guide' in filtered_by %}
+                    {% blocktrans %}Find local guides in {{ where_to_look }}{% endblocktrans %}
+                {% else %}
+                    {% blocktrans %}Find people in {{ where_to_look }}{% endblocktrans %}
+                {% endif %}
+            {% else %}
+                {% if 'tour_guide' in filtered_by %}
+                    {% blocktrans %}Find local guides at {{ where_to_look }}{% endblocktrans %}
+                {% else %}
+                    {% blocktrans %}Find people at {{ where_to_look }}{% endblocktrans %}
+                {% endif %}
+            {% endif %}
+        {% endif %}
+    {% else %}
+        {% trans "Find accommodation" %}
+    {% endif %}
+{% endblock %}
+
+{% block safe_page_title %}
+    {% if True %}
+            var anonymizedUri = document.location.origin
+                + document.location.pathname.replace(/^(\/[^\/]+\/).+/, '$1QQQQQQQQ/')
+                + document.location.search.replace(/([?&]{{ SEARCH_FIELD_NAME }}=).+?(&|$)/g, '$1QQQQQQQQ$2');
+            if (typeof ga !== "undefined") {
+                ga('set', 'location', anonymizedUri);
+            }
+    {% endif %}
+    {% if view.query and not view.result.latlng %}
+            return document.title.replace('{{ view.cleaned_query.strip|escapejs }}', 'XXXXXXXXXX');
+    {% endif %}
+{% endblock %}
+
+{% block extra_js %}
+        <script src="{% static 'el-pagination/js/el-pagination.js' %}"></script>
+        <script src="{% static 'js/forms.js' %}"></script>
+        <script src="{% static 'js/forms-validation.eo.js' %}"></script>
+        <script src="{% static 'js/ajax.js' %}"></script>
+{% endblock %}
+
+{% block content-at %}{% trans "results-start" context "URL" %}{% endblock %}
+
+{% block page_class %} search{% endblock %}
+
+{% block page %}
+    <div class="row hidden-print">
+        <div class="col-xs-12 col-md-offset-2 col-md-8">
+            <form class="search" id="searchform" role="search" method="POST" action="{% url 'search' %}">
+                {% if not view.query or not view.result.point %}
+                    <a class="btn btn-default pull-right" href="{% url 'world_map' %}" id="maplink"
+                       title="{% trans "Map of hosts" %}" tabindex="4"
+                       data-toggle="tooltip" data-placement="bottom">
+                        <span class="fa fa-map-location-dot fa-lg" aria-hidden="true"></span>
+                        <span class="sr-only">{% trans "Map of hosts" %}</span>
+                    </a>
+                {% endif %}
+                <div class="form-group">
+                    <label class="sr-only" for="searchinput">
+                        {% trans "Search for a country, a region, or a city…" %}
+                    </label>
+                    <div class="input-group">
+                        <input class="form-control" type="search" id="searchinput"
+                               name="{{ SEARCH_FIELD_NAME }}" value="{{ view.query }}" tabindex="1"
+                               placeholder="{% trans "Search for a country, a region, or a city…" %}">
+                        <span class="input-group-btn">
+                            {% if user.is_authenticated %}
+                                <button data-target="#{% trans "advanced-filter" context "URL" %}"
+                                        class="btn btn-default requires-scripting"
+                                        type="button" data-toggle="collapse" tabindex="2"
+                                        aria-controls="{% trans "advanced-filter" context "URL" %}"
+                                        aria-expanded="{{ filtered_by|yesno:'true,false' }}"
+                                        title="{% trans "Search settings" %}">
+                                    <span class="fa fa-sliders" aria-hidden="true"></span>
+                                    <span class="sr-only">{% trans "Search settings" %}</span>
+                                </button>
+                            {% endif %}
+                            <button class="btn btn-primary" type="submit" id="search" tabindex="3"
+                                    title="{% trans "Search" %} {% trans "at" %} Pasporta Servo">
+                                <span class="fa fa-search" aria-hidden="true"></span>
+                                <span class="hidden-xs">&nbsp;{% trans "Search" %}</span>
+                            </button>
+                        </span>
+                    </div>
+                </div>
+                {% csrf_token %}
+                {% if user.is_authenticated %}
+                    <div id="{% trans "advanced-filter" context "URL" %}" data-id="advanced-filter"
+                         class="{% filter compact %}
+                                    panel panel-compact panel-default advanced-filter-panel
+                                    collapse when-scripting {% if filtered_by %} in {% endif %}
+                                {% endfilter %}">
+                        <div class="panel-heading sr-only">{% trans "Advanced Search" %}</div>
+                        {% if request.user_has_profile or user.is_superuser %}
+                            <div class="panel-body form-horizontal">
+                                <p class="small text-right requires-scripting">
+                                    <a href="#{% trans "feedback" context "URL" %}" data-toggle="modal" tabindex="2">
+                                        {% blocktrans trimmed %}
+                                            what do you think about the new search tool?
+                                            <span class="text-nowrap">let us know!</span>
+                                        {% endblocktrans %}
+                                    </a>
+                                </p>
+                                {% with tabindex=2 %}
+                                    {% crispy filter.form %}
+                                {% endwith %}
+                            </div>
+                        {% else %}
+                            <div class="panel-body">
+                                <div class="help-block text-justify">
+                                    {% blocktrans trimmed %}
+                                        In order to have the option to search for members of the PS community
+                                        according to various criteria, you need to create a profile first.
+                                    {% endblocktrans %}
+                                </div>
+                            </div>
+                        {% endif %}
+                    </div>
+                {% endif %}
+            </form>
+            <div id="{% trans "feedback" context "URL" %}" class="modal fade" role="dialog" tabindex="-1"
+                 aria-labelledby="adv-search-feedback-title">
+                <div class="modal-dialog modal-lg" role="document">
+                    {% if request.user_has_profile or user.is_superuser %}
+                    {# This implies that the user is authenticated. #}
+                        <form class="modal-content" method="POST" action="{% url 'user_feedback' %}">
+                            <div class="modal-header">
+                                <h4 class="modal-title" id="adv-search-feedback-title">
+                                    {% trans "What do you think about the new search?" %}
+                                </h4>
+                            </div>
+                            <div class="modal-body" style="padding-bottom: 0">
+                                {% crispy feedback_form %}
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-default"
+                                        data-dismiss="modal">
+                                    {% trans "Close" %}
+                                </button>
+                                <button type="submit" class="btn btn-primary ajax"
+                                        data-csrf="{{ csrf_token }}"
+                                        data-on-ajax-success="feedbackSuccess">
+                                    {% trans "Send" %}
+                                </button>
+                            </div>
+                        </form>
+                    {% endif %}
+                </div>
+            </div>
+            <a name="{% trans "results-start" context "URL" %}" tabindex="-1"></a>
+        </div>
+    </div>
+
+    {% asvar place_list_not_empty trimmed %}
+        {% if country_results_count is not None %}
+            {{ country_results_count|yesno:'True,' }}
+        {% elif place_list.exists %}
+            True
+        {% endif %}
+    {% endasvar %}
+
+    <h4 class="text-center" id="georesult">
+    {% with result=view.result %}
+        {% if result.point %}
+            <p class="lead">
+                {{ result|format_geo_result }}
+            </p>
+            <p class="maplink hidden-print">
+                <a href="{% url 'world_map' %}{{ result|geo_url_hash }}">{% trans "Open map of the region" %}</a>
+            </p>
+        {% elif view.query %}
+            {% if result.error and view.cleaned_query|length > 1 %}
+                <span class="text-warning">
+                    <span class="fa fa-store-slash fa-spacer-right" aria-label="{% trans "Warning " context 'Title' %}"></span>
+                    {% trans "&lt;Geosearch service is unreachable&gt;" %}
+                </span>
+                {% if debug %}
+                    <button type="button" class="btn btn-sm btn-default" id="geoerror"
+                            data-toggle="popover" data-placement="auto" data-content="{{ result.error }}">
+                        <span class="fa fa-eye fa-lg" aria-hidden="true"></span>
+                        <span class="sr-only">{% trans "Details..." %}</span>
+                    </button>
+                {% endif %}
+                <br />
+            {% endif %}
+            {% if not filtered_by %}
+                {% blocktrans with query=view.query trimmed %}
+                    No results found for <i>{{ query }}</i>. Here are some active hosts!
+                {% endblocktrans %}
+            {% elif place_list_not_empty %}
+                {% blocktrans with query=view.query trimmed %}
+                    Such place cannot be identified: <i>{{ query }}</i>.
+                {% endblocktrans %}
+                {% trans "Here are Pasporta Servo members elsewhere." %}
+            {% endif %}
+        {% endif %}
+    {% endwith %}
+    </h4>
+
+    {% cache HOUR|mult:24 travel-advisory view.result.country_code.upper view.country_search|default:False %}
+        {% for advisory in country_advisories %}
+            {% include './snippets/travel_advice.html' with advisory=advisory country=view.result|geo_result_country only %}
+        {% endfor %}
+    {% endcache %}
+
+    {% if place_list_not_empty %}
+        <div class="row place-list">
+            <div class="col-xs-12 text-right">
+                {% if user.is_authenticated and view.query and view.result.point and country_results_count|default:500 > 6 %}
+                    {% comment %}
+                        The precise number of places is only known for countries. In other cases, we load
+                        additional places dynamically, sorted by distance – thus, we can assume there are
+                        "numerous" results.
+                    {% endcomment %}
+                    <span class="help-block" style="margin: 0">
+                        {% if country_results_count %}
+                            {% blocktrans with number=country_results_count trimmed %}
+                                {{ number }} results in total.
+                            {% endblocktrans %}
+                        {% else %}
+                            {% trans "Too many results?" %}
+                        {% endif %}
+                        {% spaceless %}
+                            <a href="#{% trans "advanced-filter" context "URL" %}" id="advanced-filter-toggle"
+                               aria-controls="{% trans "advanced-filter" context "URL" %}"
+                               aria-expanded="{{ filtered_by|yesno:'true,false' }}">
+                                <span>{% trans "Restrict the search" %}</span>
+                            </a>
+                        {% endspaceless %}.
+                    </span>
+                {% endif %}
+            </div>
+        </div>
+        {# SEPARATOR #}
+        {% include page_template %}
+    {% else %}
+        <div class="row place-list">
+            <div class="col-xs-12 help-block text-body">
+                {% if view.query or filtered_by %}
+                    {% if filter.form.cleaned_data.available %}
+                        {% if user.is_authenticated %}
+                            {% trans "Sorry, no kind hosts found…" %}
+                        {% else %}
+                            {% trans "Sorry, no kind (publicly visible) hosts found…" %}
+                            {% asvar login_action trimmed %}
+                                {% spaceless %}
+                                    <a href="{% url 'login' %}?{% next 'this page' %}">
+                                        <span>{% trans "Log in" context "Imperative" %}</span>
+                                    </a>
+                                {% endspaceless %}
+                            {% endasvar %}
+                            {% blocktrans %}{{ login_action }} to see more details.{% endblocktrans %}
+                        {% endif %}
+                    {% else %}
+                        {% trans "Sorry, no members of the community fulfilling the search criteria found." %}
+                    {% endif %}
+                    {% if not view.result.point and view.query %}
+                        {% blocktrans with query=view.query trimmed %}
+                            Such place cannot be identified: <i>{{ query }}</i>.
+                        {% endblocktrans %}
+                    {% endif %}
+                {% elif queryset_cache_id %}
+                    {% trans "The search query has expired. Please run a new search." %}
+                {% else %}
+                    &nbsp;
+                {% endif %}
+            </div>
+        </div>
+    {% endif %}
+{% endblock page %}

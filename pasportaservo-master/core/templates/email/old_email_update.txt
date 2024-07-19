@@ -1,0 +1,17 @@
+{% load i18n %}{% load compact from utils %}{% autoescape off %}
+{% filter compact %}
+    {% include './base_salutation.txt' with recipient=user only %}
+{% endfilter %}
+{% blocktrans trimmed %}
+    You're receiving this email because you (or someone on your behalf) requested a change
+    of your email address at {{ site_name }}
+{% endblocktrans %}.
+
+{% trans "The new address is:" %} {{ email }}
+{% trans "Your username, in case you've forgotten:" %} {{ user.username }}
+
+{% trans "In case you did not request this change and you suspect it is a fraud, please contact us urgently!" %}
+
+{% trans "Thanks for using our site!" %}
+{% blocktrans %}The {{ site_name }} team.{% endblocktrans %}
+{% endautoescape %}

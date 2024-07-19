@@ -1,0 +1,302 @@
+/* Header on home and hero pages */
+header.hero {
+    margin-bottom: 0;
+}
+header.hero .navigator {
+    max-width: 1140px;
+
+    a:not(.linkicon) {
+        font-weight: bold;
+    }
+    .navskip > a {
+        &:focus, &:active {
+            top: 0;
+        }
+    }
+}
+
+header.hero #title, .same-as-hero-title {
+    font-size: 5em;
+    text-align: center;
+    margin-top: 2rem;
+    padding-bottom: 0.25em;
+}
+header.hero #title small {
+    font-size: 0.3em;
+    opacity: 0.5;
+    &:hover {
+        cursor: help;
+    }
+}
+header.hero #subtitle {
+    font-size: 1.5em;
+    text-align: center;
+    margin-bottom: 2em;
+    font-weight: bold;
+}
+
+header.hero .search-container {
+    margin-left: auto;
+    margin-right: auto;
+}
+header.hero form.search {
+    margin-bottom: 2em;
+    .form-group {
+        margin-bottom: 0;
+    }
+    button[type="submit"] {
+        min-width: 40px;
+    }
+}
+
+/* Home page contents */
+#promo-pitch .promo-contents {
+    margin-top: 25px;
+    text-align: justify;
+    text-align-last: center;
+}
+#home-explore .explore-action {
+    margin-top: 5px;
+    margin-bottom: 30px;
+}
+#home-explain.has-content {
+    padding-top: 3em;
+    padding-bottom: 3em;
+    border-top: solid 3px $color-brand;
+    border-radius: 20px 20px 0 0;
+}
+.blog-post .post-title .post-published {
+    position: relative;
+    top: 0.7ex;
+}
+
+/* NANO */
+@media (max-width: 319px) {
+    header.hero #title {
+        font-size: 20vw;
+    }
+}
+/* XXS */
+@media (max-width: #{$BOOTSTRAP-XS - 1}) {
+    .blog-post .post-title a:after {
+        display: table;
+        content: " ";
+        clear: right;
+    }
+    .blog-post .post-title .post-published {
+        top: 0.85ex;
+    }
+}
+/* !XSS */
+@media (min-width: #{$BOOTSTRAP-XS}) {
+    header.hero .navigator {
+        .nav-session.out {
+            position: absolute;
+            left: 20%;
+        }
+        .nav-profile.out {
+            position: absolute;
+            right: 20%;
+        }
+    }
+    header.hero form.search {
+        button[type="submit"] {
+            min-width: 80px;
+        }
+    }
+}
+/* XS */
+@media (max-width: #{$BOOTSTRAP-SM - 1}) {
+    header.hero #title {
+        font-size: 4em;
+    }
+    header.hero #subtitle {
+        margin-top: 0.5em;
+    }
+    #home-explain.has-content {
+        padding-top: 2em;
+    }
+}
+/* SM */
+@media (min-width: #{$BOOTSTRAP-SM}) {
+    header.hero .search-container {
+        max-width: 750px;
+        padding-left: 15px;
+        padding-right: 15px;
+    }
+}
+/* MD */
+@media (min-width: #{$BOOTSTRAP-MD}) {
+    header.hero .search-container {
+        max-width: 970px;
+    }
+    header.hero form.search {
+        margin-bottom: 2em;
+    }
+    header.hero #title {
+        margin-top: 1em;
+        padding-bottom: 0.5em;
+    }
+}
+/* LG */
+@media (min-width: #{$BOOTSTRAP-LG - 30}) {
+    header.hero form.search {
+        margin-bottom: 5em;
+    }
+    header.hero #title {
+        margin-top: 1em;
+        padding-bottom: 1em;
+    }
+}
+@media (min-width: #{$BOOTSTRAP-LG}) {
+    header.hero .search-container {
+        max-width: 1170px;
+    }
+    header.hero form.search {
+        button[type="submit"] {
+            min-width: 120px;
+        }
+    }
+}
+
+
+/* Social icons on home pages */
+$social-icon-size: 36px;
+.social-links.social-networks {
+    float: left;
+}
+.social-links.social-contact {
+    float: right;
+}
+.social-links a {
+    display: inline-block;
+    width: $social-icon-size;
+    height: $social-icon-size + 2px;
+    text-align: center;
+    overflow: hidden;
+    border-bottom: solid 2px transparent;
+    --tooltip-placement: bottom;
+
+    &:hover, &:focus, &:active {
+        outline: 0;
+    }
+    &:hover .social-icon, &:focus .social-icon {
+        .back-hl {
+            display: inline-block;
+        }
+        .content {
+            color: darken($color-brand-aux, 6%);
+        }
+    }
+    &:focus {
+        border-bottom-color: $color-brand-aux;
+    }
+}
+.social-links .social-icon {
+    font-size: $social-icon-size / 2;
+    .outline {
+        color: $color-brand-main;
+    }
+    .back-hl {
+        font-size: 26px;
+        line-height: inherit;
+        color: $color-highlight-bg;
+        display: none;
+    }
+    .content {
+        font-size: 23px;
+        color: $color-brand-aux;
+    }
+}
+.social-support {
+    text-align: center;
+}
+
+/* XXS */
+@media (max-width: #{$BOOTSTRAP-XS - 1}) {
+    .social-links.social-networks {
+        a {
+            margin-right: $social-icon-size / 3;
+        }
+    }
+    .social-links.social-contact {
+        width: $social-icon-size + 2px;
+        line-height: 1;
+
+        a {
+            width: $social-icon-size + 2px;
+            height: $social-icon-size;
+            border-right: solid 2px transparent;
+            border-bottom: 0;
+            &:focus {
+                border-right-color: $color-brand-aux;
+                border-bottom-color: transparent;
+            }
+            &:not(:last-of-type) {
+                margin-bottom: $social-icon-size / 5;
+            }
+            --tooltip-placement: left;
+        }
+    }
+    .social-support {
+        clear: both;
+        padding-left: 2px;
+        padding-right: 5px;
+        padding-top: $social-icon-size / 3;
+
+        a {
+            white-space: normal;
+        }
+    }
+}
+/* !XXS */
+@media (min-width: #{$BOOTSTRAP-XS}) {
+    $social-block-height: 80px;
+    $social-block-vertical-spacing: ($social-block-height - $social-icon-size) / 2;
+    .social-links {
+        height: $social-block-height;
+        padding-top: $social-block-vertical-spacing;
+        padding-bottom: $social-block-vertical-spacing;
+
+        &.social-networks, &.social-contact {
+            a {
+                margin-left: $social-icon-size / 5;
+                margin-right: $social-icon-size / 5;
+            }
+        }
+    }
+    .social-links.social-networks a:first-of-type {
+        margin-left: 0;
+    }
+    .social-links.social-contact a:last-of-type {
+        margin-right: 0;
+    }
+    .social-support {
+        height: $social-block-height;
+        padding-top: $social-block-vertical-spacing + 2px;
+        padding-bottom: $social-block-vertical-spacing;
+
+        a {
+            margin-left: $social-icon-size / 5;
+            margin-right: $social-icon-size / 5;
+        }
+    }
+}
+/* XS (only) */
+@media (min-width: #{$BOOTSTRAP-XS}) and (max-width: #{$BOOTSTRAP-SM - 1}) {
+    .social-support {
+        clear: both;
+    }
+}
+/* MD */
+@media (min-width: #{$BOOTSTRAP-MD}) {
+    .social-support {
+        a {
+            // Compensate for one social link icon less on the right, to keep
+            // the support button centered visually.
+            // If the number of icons will change (on the left or on the right),
+            // this value will need to be adjusted correspondingly.
+            margin-right: $social-icon-size + 3 * ($social-icon-size / 5);
+        }
+    }
+}

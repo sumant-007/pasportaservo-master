@@ -1,0 +1,58 @@
+# This workflow integrates SAST Scan with GitHub's code scanning feature.
+# Scan is a free open-source security tool for modern DevOps teams.
+# See https://scan.appthreat.dev/en/latest/integrations/code-scan/
+# and https://github.com/ShiftLeftSecurity/sast-scan.
+name: ShiftLeft SAST Scan
+
+on:
+  pull_request:
+    branches:
+      - master
+  push:
+    branches:
+      - master
+  workflow_dispatch:
+
+jobs:
+  Scan-Build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+      - run: git checkout HEAD^2
+        if: ${{ github.event_name == 'pull_request' }}
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+          cache: 'pip'
+      - name: Cache pip
+        id: cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('requirements/dev.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+            ${{ runner.os }}-
+      - name: Set up requirements
+        run: pip install -r requirements/dev.txt
+
+      - name: Perform scan
+        uses: ShiftLeftSecurity/scan-action@master
+        env:
+          WORKSPACE: ""
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SCAN_AUTO_BUILD: true
+          SCAN_ANNOTATE_PR: false
+        with:
+          output: reports
+          type: "python,credscan,depscan"
+
+      - name: Upload report
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: reports

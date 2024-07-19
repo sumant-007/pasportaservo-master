@@ -1,0 +1,11 @@
+{% load i18n %}{% load compact from utils %}{% autoescape off %}
+{% filter compact %}
+    {% include './base_salutation.txt' with recipient=user only %}
+{% endfilter %}
+
+{% block information %}{% trans "Your username, in case you've forgotten:" %} {{ user.username }}{% endblock %}
+{% block additional_information %}{% endblock %}
+
+{% trans "Thanks for using our site!" %}
+{% blocktrans %}The {{ site_name }} team.{% endblocktrans %}
+{% endautoescape %}

@@ -1,0 +1,64 @@
+{% extends 'hosting/base_confirm.html' %}
+{% load i18n %}
+
+{% block head_title %}
+    {# Confirmation is displayed both for deletion of regular profiles and of family member profiles. #}
+    {% if view.role == roles.OWNER and profile == user.profile %}&#9872;{% endif %}
+    {% trans "Delete profile" %}
+    {% if view.role >= roles.SUPERVISOR and profile.user_id %} ({{ profile.name|default:profile.INCOGNITO }}) {% endif %}
+{% endblock %}
+
+{% block confirmation %}
+    {% if view.role == roles.OWNER %}
+        {% trans "your " as kin %}
+    {% else %}
+        {% trans "this " as kin %}
+    {% endif %}
+    {% if profile.user_id %}
+        <span class="fa fa-exclamation-circle fa-spacer-right-2x" style="transform: rotate(-10deg)"
+              aria-label="{% trans "Warning " context 'Title' %}"></span>
+        {% blocktrans trimmed %}
+            Are you sure you want to delete {{ kin }}profile and all linked data (place, phone…)?
+        {% endblocktrans %}
+    {% else %}
+        {% trans "Are you sure you want to delete the profile of this family member?" %}
+    {% endif %}
+{% endblock %}
+
+{% block form_confirm_button_class %}{% if profile.user_id %}btn-danger{% else %}{{ block.super }}{% endif %}{% endblock %}
+{% block cancel_button %}
+    {% if profile.user_id %}
+        {% url 'profile_edit' profile.pk profile.autoslug as default_previous_page %}
+    {% else %}
+        {% url 'profile_edit' view.place.owner.pk view.place.owner.autoslug as default_previous_page %}
+    {% endif %}
+    {{ block.super }}
+{% endblock %}
+
+{% block extra_details %}
+    {% if places %}<br />{% endif %}
+    {% if view.role >= roles.SUPERVISOR or not profile.user_id %}
+            {{ profile.get_fullname_always_display }}
+    {% endif %}
+{% endblock %}
+{% block extra_details_class %}{% spaceless %}
+    {% if view.role >= roles.SUPERVISOR or not profile.user_id %}
+            person-full-name
+    {% endif %}
+{% endspaceless %}{% endblock %}
+
+{% block extra_details_block %}
+    {% if places %}
+        <div class="row">
+            <div class="col-xs-12 col-sm-8 col-sm-offset-2 col-md-6 col-md-offset-3">
+                <ul class="list-group small">
+                    {% for place in places %}
+                        <li class="list-group-item place-list-compact">
+                            {{ place }}
+                            {% include './snippets/place_availability_icon.html' with place=place extra_class='pull-right' nudge_yes="0.06em" nudge_no="0.03em" only %}
+                        </li>
+                    {% endfor %}
+                </ul>
+            </div></div>
+    {% endif %}
+{% endblock %}

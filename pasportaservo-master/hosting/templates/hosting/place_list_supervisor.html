@@ -1,0 +1,460 @@
+{% extends 'core/base.html' %}
+{% load i18n static expression variable cache %}
+{% load next compact mult from utils %}
+{% load is_invalid clear_invalid is_esperanto_surrogate from profile %}
+{% load format_dms is_location_in_country from geoformat %}
+
+{% block head_title %}{{ view.country.name }}{% endblock %}
+
+{% block extra_js %}
+        <script src="{% static 'js/ajax.js' %}"></script>
+        <script src="{% static 'maps/mapbox-gl.eo.js' %}"></script>
+        <script src="{% static 'maps/region-map.js' %}"></script>
+{% endblock %}
+{% block extra_head %}
+        <link rel="stylesheet" href="{{ MAPBOX_GL_CSS }}" crossorigin="anonymous" integrity="{{ MAPBOX_GL_CSS_INTEGRITY }}" referrerpolicy="origin-when-cross-origin">
+        <script src="{{ MAPBOX_GL_JS }}" crossorigin="anonymous" integrity="{{ MAPBOX_GL_JS_INTEGRITY }}" referrerpolicy="origin-when-cross-origin"></script>
+        <script src="{% url 'gis_endpoints' %}?format=js&type=region&country={{ view.country.code }}{% if view.in_book_status is not None %}&in_book={{ view.in_book_status|yesno:"1,0" }}{% endif %}"></script>
+{% endblock %}
+
+{% block page %}
+    {% blocktrans count counter=13 asvar checked_title trimmed %}
+        checked{% plural %}checked
+    {% endblocktrans %}  {# always show the plural adjective #}
+
+    {% blocktrans count counter=13 asvar confirmed_title trimmed %}
+        confirmed{% plural %}confirmed
+    {% endblocktrans %}  {# always show the plural adjective #}
+
+    {% blocktrans count counter=not_confirmed_count asvar not_confirmed_title trimmed %}
+        not confirmed{% plural %}not confirmed
+    {% endblocktrans %}
+
+    {% if place_count %}
+        <div>
+            {% widthratio checked_count place_count 100 as checked_progress %}
+            {% widthratio confirmed_count place_count 100 as confirmed_progress %}
+            <div class="progress" title="{{ checked_title }}" data-toggle="tooltip">
+                <span class="sr-only">{{ checked_title }} :</span>
+                <div class="progress-bar progress-bar-success" role="progressbar"
+                     aria-valuenow="{{ checked_progress }}" aria-valuemin="0" aria-valuemax="100"
+                     style="min-width: 2em; width: {{ checked_progress }}%">
+                    {{ checked_count }} &nbsp;({{ checked_progress }}%)
+                </div>
+            </div>
+            <div class="progress" title="{{ confirmed_title }}" data-toggle="tooltip">
+                <span class="sr-only">{{ confirmed_title }} :</span>
+                <div class="progress-bar progress-bar-info" role="progressbar"
+                     aria-valuenow="{{ confirmed_progress }}" aria-valuemin="0" aria-valuemax="100"
+                     style="min-width: 2em; width: {{ confirmed_progress }}%">
+                    {{ confirmed_count }}
+                </div>
+            </div>
+        </div>
+    {% endif %}
+
+    <h1 class="text-center" style="padding: 10px;">
+        {{ view.country.name }}
+        {% if country_coordinates %}
+            <button class="btn btn-default collapsed requires-scripting hidden-print" style="margin-left: 1em"
+                    type="button" data-target="#map-container" data-toggle="collapse"
+                    aria-controls="map-container" aria-expanded="false"
+                    title="{% trans "Map of the country" %}">
+                <span class="fa fa-lg fa-map" aria-hidden="true"></span>
+                <span class="sr-only">{% trans "Map of the country" %}</span>
+            </button>
+        {% endif %}
+    </h1>
+
+    <div class="row collapse" id="map-container">
+        <div class="col-xs-12 col-md-6 col-md-offset-3">
+            <div class="embed-responsive embed-responsive-16by9" id="map" data-coordinates="{{ country_coordinates }}" style="visibility: hidden">
+            </div>
+        </div>
+    </div>
+
+    <br />
+    <ul class="nav nav-pills" role="tablist">
+        <li role="presentation" {% if view.in_book_status is True %}aria-pressed="true" class="active {% else %}class="hidden-print {% endif %}pull-sm-right btn-vert-space">
+            <a href="{% url 'staff_place_list' country_code=view.country in_book=1 %}">
+                <span class="badge">{{ in_book_count }}</span>
+                {% trans "In the book" %}
+            </a>
+        </li>
+        <li role="presentation" {% if view.in_book_status is False %}aria-pressed="true" class="active {% else %}class="hidden-print {% endif %}pull-sm-right btn-vert-space">
+            <a href="{% url 'staff_place_list' country_code=view.country in_book=0 %}">
+                <span class="badge">{{ not_in_book_count }}</span>
+                {% trans "Not in the book" %}
+            </a>
+        </li>
+        <li role="presentation" {% if view.in_book_status is None %}aria-pressed="true" class="active {% else %}class="hidden-print {% endif %}pull-sm-right btn-vert-space">
+            <a href="{% url 'staff_place_list' country_code=view.country %}">
+                {% trans "All hosts" %}
+            </a>
+        </li>
+        <li role="presentation" {% if view.kwargs.email %}aria-pressed="true" class="active {% else %}class="hidden-print {% endif %}btn-vert-space">
+            {# Translators: must be identical to the <email> parameter value in staff_place_list url. #}
+            {% trans "email-addr" context "URL" as email_url_part %}
+            {% if view.in_book_status is not None %}
+                {% if view.kwargs.email %}
+                    {% url 'staff_place_list' country_code=view.country in_book=view.in_book_status|yesno:"1,0" as invalid_emails_list_url %}
+                {% else %}
+                    {% url 'staff_place_list' country_code=view.country in_book=view.in_book_status|yesno:"1,0" email=email_url_part as invalid_emails_list_url %}
+                {% endif %}
+            {% else %}
+                {% if view.kwargs.email %}
+                    {% url 'staff_place_list' country_code=view.country as invalid_emails_list_url %}
+                {% else %}
+                    {% url 'staff_place_list' country_code=view.country email=email_url_part as invalid_emails_list_url %}
+                {% endif %}
+            {% endif %}
+            <a href="{{ invalid_emails_list_url }}">
+                <span class="badge">{{ invalid_emails_count }}</span>
+                {% trans "invalid emails"|capfirst %}
+                <span class="fa fa-sm {{ view.kwargs.email|yesno:"fa-filter-circle-xmark,fa-filter" }} hidden-print" aria-hidden="true"></span>
+            </a>
+        </li>
+        <li role="presentation" class="hidden-print btn-vert-space">
+            <a href="#{% trans "not-confirmed" context "URL" %}">
+                <span class="badge">{{ not_confirmed_count }}</span>
+                {{ not_confirmed_title|capfirst }}
+                {% if not_confirmed_count and place_list|length > 0 %}<span class="fa fa-sm fa-turn-down" aria-hidden="true"></span>{% endif %}
+            </a>
+        </li>
+    </ul>
+    <br />
+
+    {% regroup place_list by confirmed as confirmed_list %}
+    {% for confirmed_state in confirmed_list %}
+        <section>
+            {% if confirmed_state.grouper %}
+                <h3 id="{% trans "confirmed" context "URL" %}" class="text-center text-info">
+                    {{ confirmed_title|capfirst }}
+                    <small>&bull;&nbsp; {{ confirmed_state.list|length }}</small>
+                </h3>
+            {% else %}
+                <h3 id="{% trans "not-confirmed" context "URL" %}" class="text-center text-warning">
+                    {{ not_confirmed_title|capfirst }}
+                    <small>&bull;&nbsp; {{ confirmed_state.list|length }}</small>
+                </h3>
+            {% endif %}
+            {% for place in confirmed_state.list %}
+                <div class="{% filter compact %}
+                                place-supervisor-detail callout
+                                {% if place.checked %}callout-success{% endif %}
+                                {% if not place.confirmed %}callout-warning{% endif %}
+                                {% if place.owner.death_date %}deceased-owner{% endif %}
+                            {% endfilter %}"
+                     id="p-{{ place.pk }}">
+                    {% asvar current_page_position %}#p-{{ place.pk }}{% endasvar %}
+
+                    <div class="sr-only">&#8962;&nbsp; <em>{% trans "place"|upper %} {{ forloop.counter }}</em></div>
+                    <div class="control-buttons pull-right">
+                    {# CONTROL BUTTONS: CHECK, UPDATE; IMPORTANT TIMESTAMPS #}
+                        <div class="btn-toolbar" role="toolbar">
+                            <div class="btn-group" role="group">
+                                {% asvar id_check_status %}check-place-{{ place.pk }}{% endasvar %}
+                                {% if place.checked %}
+                                    {% include './snippets/checked.html' with object=place button=True button_id=id_check_status %}
+                                {% else %}
+                                    <form action="{% url 'place_check' place.pk %}?{% next current_page_position %}"
+                                          method="POST"
+                                          class="unwrap-after-success">
+                                        {% csrf_token %}
+                                        <button type="submit" id="{{ id_check_status }}" class="btn btn-warning ajax"
+                                                aria-live="assertive" aria-atomic="true"
+                                                data-csrf="{{ csrf_token }}"
+                                                data-hover-text="{% trans "Check?" %}"
+                                                data-process-elem=".process-icon"
+                                                data-success-text="{% trans "Checked" %}"
+                                                data-on-ajax-setup="checkPlaceSetup"
+                                                data-on-ajax-success="checkPlaceSuccess"
+                                                data-failure-message="check-place-check-errors"
+                                                autocomplete="off">
+                                            {% trans "Not checked" %}
+                                            <span class="sr-only">({% trans "Check?" %})</span>
+                                        </button>
+                                        <span class="fa fa-spinner fa-spin fa-lg process-icon"
+                                              style="display: none; --fa-animation-duration: 3s;"
+                                              aria-label="{% trans "working..." %}"></span>
+                                    </form>
+                                {% endif %}
+                            </div>
+                            <div class="btn-group hidden-print" role="group">
+                                <a class="btn btn-success" href="{% url 'place_update' place.pk %}?{% next current_page_position %}">
+                                    <span class="fa fa-edit" aria-hidden="true"></span>
+                                    {% trans "Update" %}
+                                </a>
+                                <button type="button" class="btn btn-success dropdown-toggle hidden-nano"
+                                        data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                    <span class="caret"></span>
+                                    <span class="sr-only">{% trans "more options" %}</span>
+                                </button>
+                                <ul class="dropdown-menu dropdown-menu-right">
+                                    <li>
+                                        <a href="{% url 'place_update' place.pk %}?{% next current_page_position %}">
+                                            {% blocktrans with kin="" %}Update {{ kin }}place{% endblocktrans %}
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a href="{% url 'place_location_update' place.pk %}?{% next current_page_position %}">
+                                            {% trans "Update location on map" %}
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a href="{% url 'profile_update' place.profile.pk place.profile.autoslug %}?{% next current_page_position %}">
+                                            {% trans "Update profile" %}
+                                        </a>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        {% spaceless %}
+                        <p class="timestamp text-center text-muted"
+                           title="{% trans "last login" %}{% if not place.owner.user.last_login %} ({% trans "never" %}){% endif %}"
+                           data-title="{% trans "last login" %}<br />{{ place.owner.user.last_login|default:_("never") }}"
+                           data-toggle="tooltip" data-html="true" data-placement="bottom">
+                            <small class="fa fa-fw fa-sign-in-alt" aria-hidden="true" style="position: relative; left: -1px"></small>
+                            <span class="sr-only">{% trans "last login" %}</span>
+                            <small><samp> {{ place.owner.user.last_login|date:"Y-m-d H:i"|default:"—"|stringformat:"-16s" }} UTC</samp></small>
+                        </p>
+                        {% endspaceless %}
+                        {% spaceless %}
+                        <p class="timestamp text-center text-muted"
+                           title="{% trans "last modification" %}{% if not place.modified %} ({% trans "never" %}){% endif %}"
+                           data-title="{% trans "last modification" %}<br />{{ place.modified|default:_("never") }}"
+                           data-toggle="tooltip" data-html="true" data-placement="bottom">
+                            <small class="fa fa-fw fa-regular fa-edit" aria-hidden="true"></small>
+                            <span class="sr-only">{% trans "last modification" %}</span>
+                            <small><samp> {{ place.modified|date:"Y-m-d H:i"|default:"—"|stringformat:"-16s" }} UTC</samp></small>
+                        </p>
+                        {% endspaceless %}
+                    {# END OF CONTROL BUTTONS #}
+                    </div>
+
+                    <address>
+                        {# DETAILS OF THE OWNER: FULL NAME, BIRTH DATE, DEATH DATE, AGE #}
+                        <a href="{{ place.profile.get_edit_url }}" target="_blank">
+                            <h4 class="name">
+                                {% if place.profile.death_date %}
+                                    <i class="sr-only">{% trans "Deceased member" %}</i>
+                                {% endif %}
+                                <small>{{ place.profile.get_title_display }}</small>
+                                {{ place.profile.get_fullname_display }}
+                                {% if place.profile.birth_date %}
+                                    <small>
+                                        {{ place.profile.birth_date|date:"Y-m-d" }}
+                                        {% if place.profile.death_date %}
+                                            &ndash; {{ place.profile.death_date|date:"Y-m-d" }}
+                                        {% endif %}
+                                        ({% blocktrans with age=place.profile.age %}{{ age }} y.o.{% endblocktrans %})
+                                    </small>
+                                {% elif place.profile.death_date %}
+                                    <small>
+                                        &#x2722; {{ place.profile.death_date|date:"M. Y" }}
+                                    </small>
+                                {% endif %}
+                            </h4>
+                        </a>
+                        <a href="{% url 'profile_update' place.profile.pk place.profile.autoslug %}?{% next current_page_position %}"
+                           class="control-buttons btn btn-default btn-sm btn-vert-space">
+                            {% trans "Update profile" %}
+                        </a>
+
+                        <div class="address">
+                        {# FULL ADDRESS OF THE PLACE #}
+                            {{ place.address }}<br />
+                            {{ place.get_postcode_display }}
+                            <span class="fa fa-fw fa-regular fa-circle-dot" aria-hidden="true"></span>
+                            <b>{{ place.city }}</b><br />
+                            {% cache HOUR|mult:24 place-country-subregion place.country.code place.state_province %}
+                                {% comment %}
+                                    While regions do not change often, if there _is_ a change, we want supervisors
+                                    to see the updated information fairly on time; therefore, caching for 24 hours.
+                                {% endcomment %}
+                                {% filter force_escape %}
+                                    {% expr place.subregion.latin_name or place.subregion.latin_code %}
+                                {% endfilter %}
+                            {% endcache %}
+                        {# GEOGRAPHICAL LOCATION OF THE PLACE #}
+                            <span style="display: inline-block">
+                                <span class="fa fa-fw fa-globe" aria-hidden="true"></span>
+                                {{ place.location|format_dms:place.location_confidence }}
+                                {% if view.role == roles.ADMIN %}<sup><small>(&#8982;{{ place.location_confidence }})</small></sup>{% endif %}
+                                {% if place.location_inaccurate %}
+                                    <small class="text-warning">
+                                        <span class="sr-only">&#9888;</span>
+                                        {% trans "the location is imprecise" as location_warning %}
+                                        <span class="fa fa-exclamation-triangle" data-toggle="tooltip"
+                                              title="{{ location_warning|capfirst }}"
+                                              aria-label="{% trans "Warning " context 'Title' %}: {{ location_warning }}"></span>
+                                        <span class="visible-print-inline">&#9001;<i>{{ location_warning|capfirst }}</i>&#9002;</span>
+                                    </small>
+                                {% endif %}
+                                {% spaceless %}
+                                <a href="{% url 'place_location_update' place.pk %}?{% next current_page_position %}"
+                                   class="action-edit-inline text-label-success"
+                                   title="{% trans "Edit location" %}" data-toggle="tooltip">
+                                    <span class="fa fa-edit" aria-hidden="true"></span>
+                                    <span class="sr-only">{% trans "Edit location" %}</span>
+                                </a>
+                                {% endspaceless %}
+                                {% if place.location_accurate and not place|is_location_in_country %}
+                                    <a href="{% url 'place_location_update' place.pk %}?{% next current_page_position %}"
+                                       class="btn btn-warning btn-xs"
+                                       data-hover-text="{% trans "Confirm?" %}">
+                                        {% trans "Location seems off" %}
+                                        <span class="sr-only">({% trans "Confirm?" %})</span>
+                                    </a>
+                                {% endif %}
+                            </span>
+                        </div>
+                        <div class="description-short text-justify {% if place.short_description.strip %}has-content{% endif %}">
+                        {# DESCRIPTION OF THE PLACE SUPPLIED BY THE OWNER #}
+                            {% with desc=place.short_description %}
+                                {% if desc|is_esperanto_surrogate %}
+                                    {% asvar description_color %}text-surrogate text-warning{% endasvar %}
+                                    {% asvar description_text_warning %}{% trans "Esperanto letters?" %}{% endasvar %}
+                                {% endif %}
+                                {% if desc|length > 135 %}
+                                    {% asvar description_length_warning %}{% trans "Description too long." %}{% endasvar %}
+                                {% endif %}
+                                <small class="{{ description_color }}">
+                                    {{ desc }}
+                                    {% if description_length_warning %}
+                                        <span class="text-danger text-nowrap">
+                                            <span class="sr-only">&#9888;</span>
+                                            <span class="fa fa-exclamation-triangle" data-toggle="tooltip" data-html="true"
+                                                  title="{{ description_text_warning }} {{ description_length_warning }} "
+                                                  data-title="{{ description_text_warning }}
+                                                              {% if description_text_warning and description_length_warning %}<br />{% endif %}
+                                                              {{ description_length_warning }}"
+                                                  aria-label="{% trans "Warning " context 'Title' %}"></span>
+                                            {{ desc|length }}&#8202;/&#8202;135
+                                            {% if description_text_warning %}
+                                                <span class="visible-print-inline">&#9001;<i>{{ description_text_warning }}</i>&#9002;</span>
+                                            {% endif %}
+                                        </span>
+                                    {% elif description_text_warning %}
+                                        <span class="sr-only">&#9888;</span>
+                                        <span class="fa fa-exclamation-triangle" data-toggle="tooltip"
+                                              title="{{ description_text_warning }}"
+                                              aria-label="{% trans "Warning " context 'Title' %}: {{ description_text_warning }}"></span>
+                                        <span class="visible-print-inline">&#9001;<i>{{ description_text_warning }}</i>&#9002;</span>
+                                    {% endif %}
+                                </small>
+                            {% endwith %}
+                        </div>
+                        <div class="phone-number-list">
+                        {# LIST OF PHONE NUMBERS VIA WHICH THE OWNER IS REACHABLE #}
+                            {% for phone in place.profile.phones.all %}
+                                {% if not phone.deleted %}
+                                    <small class="phone-number">
+                                        <span class="sr-only">&#9743;&nbsp;</span>
+                                        {% asvar phone_dimmed_reason trimmed %}
+                                            {% if view.in_book_status is True and not phone.visibility.in_book %}
+                                                {% trans "not printed in the book" %}
+                                            {% endif %}
+                                            {% if view.in_book_status is False and not phone.visibility.online_public and not phone.visibility.online_authed %}
+                                                {% trans "not displayed to other users" %}
+                                            {% endif %}
+                                            {% if view.in_book_status is None and phone.visibility.concealed %}
+                                                {% trans "The owner set it as not visible to other users" %}
+                                            {% endif %}
+                                        {% endasvar %}
+                                        {% if phone_dimmed_reason %}
+                                            <span class="sr-only">{% trans "Note " context 'Title' %}: {{ phone_dimmed_reason }}</span>
+                                        {% endif %}
+                                        <b class="number{% if phone_dimmed_reason %} text-muted{% endif %}"
+                                           data-toggle="tooltip" data-placement="top"
+                                           title="{{ phone_dimmed_reason }}">
+                                            {{ phone.icon }}
+                                            {{ phone.number.as_international }}
+                                        </b>
+                                        <i class="comment{% if phone.comments|is_esperanto_surrogate %} text-surrogate text-warning{% endif %}"
+                                           {% if phone_dimmed_reason %}style="opacity: 0.55"{% endif %}>
+                                            {{ phone.comments }}
+                                            {% if phone.comments|is_esperanto_surrogate %}
+                                                {% trans "Esperanto letters?" as phone_comment_text_warning %}
+                                                <span class="sr-only">&#9888;</span>
+                                                <span class="fa fa-exclamation-triangle text-warning"
+                                                      data-toggle="tooltip" data-container="#p-{{ place.pk }} address"
+                                                      title="{{ phone_comment_text_warning }}"
+                                                      aria-label="{% trans "Warning " context 'Title' %}: {{ phone_comment_text_warning }}"></span>
+                                                <small class="visible-print-inline"><i>{{ phone_comment_text_warning }}</i></small>
+                                            {% endif %}
+                                        </i>
+                                        {% spaceless %}
+                                        <a href="{% url 'phone_update' place.profile.pk phone.pk %}?{% next current_page_position %}"
+                                           class="action-edit-inline text-label-success"
+                                           title="{% trans "Update a phone number" %}" data-toggle="tooltip">
+                                            <span class="fa fa-edit" aria-hidden="true"></span>
+                                            <span class="sr-only">{% trans "Update a phone number" %}</span>
+                                        </a>
+                                        {% endspaceless %}
+                                    </small>
+                                {% endif %}
+                            {% endfor %}
+                        </div>
+                    </address>
+                    <div class="host">
+                    {# PLACE OWNER'S ACCOUNT INFORMATION #}
+                        <h5>
+                            <small>{% trans "username"|capfirst %}</small>
+                            <span class="person-username">{{ place.profile.user.username }}</span>
+                        </h5>
+                        {% if place.profile.user.email|is_invalid %}
+                            <span class="person-email-address text-danger" title="{% trans "invalid email" %}" data-toggle="tooltip">
+                                {{ place.profile.user.email|clear_invalid }}
+                                <span class="sr-only">&#9888;</span>
+                                <span class="fa fa-exclamation-triangle fa-spacer-right" aria-label="{% trans "Warning " context 'Title' %}"></span>
+                                <small class="visible-print-inline">&#9001;<i>{% trans "invalid email" %}</i>&#9002;</small>
+                            </span>
+                        {% else %}
+                            <span class="person-email-address">{{ place.profile.user.email|urlize }}</span>
+                            {% if place.profile.user != user %}
+                                {# Supervisors cannot mark their own email address. #}
+                                {% include './snippets/email_mark_invalid.html' with profile=place.profile return_url=current_page_position extra_class="control-buttons" %}
+                            {% endif %}
+                        {% endif %}
+                        {% if place.profile.user != user %}
+                            {% url 'staff_email_update' place.profile.pk place.profile.autoslug as place_profile_email_url %}
+                        {% else %}
+                            {% url 'email_update' as place_profile_email_url %}
+                        {% endif %}
+                        <a href="{{ place_profile_email_url }}?{% next current_page_position %}"
+                           class="control-buttons btn btn-default btn-sm">
+                            {% trans "Update email" %}
+                        </a>
+                    </div>
+                </div>
+            {% endfor %}
+        </section>
+    {% empty %}
+        <div class="row place-list">
+            <div class="col-xs-12 help-block text-body">
+                {% trans "Sorry, no kind hosts found…" %}
+            </div>
+        </div>
+    {% endfor %}
+
+    <div class="modal fade" id="check-place-check-errors" tabindex="-1" role="dialog" aria-labelledby="check-place-check-errors-title">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title text-danger" id="check-place-check-errors-title" data-title="{% trans "There is a problem with this host's data…" %}"></h5>
+                </div>
+                <div class="modal-body">
+                    <ul></ul>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script>
+        window.checkPlaceTextSurrogateWarning = "{% blocktrans trimmed %}
+                                                     The description of the place or phone note seem to contain
+                                                     Esperanto written in a surrogate manner. Accept such text?
+                                                 {% endblocktrans %}";
+    </script>
+{% endblock page %}

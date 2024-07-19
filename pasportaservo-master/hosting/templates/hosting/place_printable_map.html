@@ -1,0 +1,84 @@
+{% extends 'hosting/place_detail.html' %}
+{% load i18n static variable utils %}
+
+{% block extra_css %}{% endblock %}
+{% block extra_js %}
+        <script src="{% static 'maps/mapbox-gl.eo.js' %}"></script>
+        <script src="{% static 'maps/place-map.js' %}"></script>
+{% endblock %}
+{% block extra_head %}
+        <link rel="stylesheet" href="{{ MAPBOX_GL_CSS }}">
+        <script src="{{ MAPBOX_GL_JS }}"></script>
+        <script src="{% url 'gis_endpoints' %}?format=js&type=place-printed"></script>
+{% endblock %}
+
+{% block page_class %} place-print{% endblock %}
+
+{% block page %}
+    <div class="row">
+        <div class="col-xs-12">
+            {# OWNER'S DETAILS: NAME AND ADDRESS #}
+            {% if place.deleted %}
+                <div class="alert alert-small alert-danger">
+                    <span class="fa fa-exclamation-circle fa-spacer-right" aria-label="{% trans "Warning " context 'Title' %}"></span>
+                    {% trans "The address is obsolete" %}
+                </div>
+            {% endif %}
+
+            <button class="btn btn-default pull-right requires-scripting hidden-print"
+                    style="margin-left: 0.5em"
+                    onclick="window.print()" autofocus>
+                {% trans "Print" %}
+            </button>
+
+            {% asvar place_owner trimmed %}
+                <span class="name">{{ place.owner.get_fullname_display }}</span>
+            {% endasvar %}
+            <p>
+                {% if place.available %}
+                    {% blocktrans with name=place_owner %}Place of {{ name }}{% endblocktrans %}
+                {% else %}
+                    {% blocktrans with name=place_owner %}Habitat of {{ name }}{% endblocktrans %}
+                {% endif %}
+                {% if place.owner.death_date %}
+                    &nbsp;<small class="text-nowrap">({% trans "Deceased member" %})</small>
+                {% endif %}
+            </p>
+            <p class="address">
+                {% if view.verbose_view and place.address %}
+                    {% filter compact %}
+                        {% for address_line in place.address.strip|split:'NEWLINE' %}
+                            {% if address_line.strip %}
+                                {{ address_line.strip }} {% if not forloop.last %}&mdash;{% endif %}
+                            {% endif %}
+                        {% endfor %}
+                    {% endfilter %}
+                    <br />
+                {% endif %}
+                {% filter cut:"<span>"|cut:"</span>"|capfirst %}{% spaceless %}
+                    {% asvar address_city trimmed %}
+                        {% include './snippets/place_city_complete.html' with city=place.city closest_city=place.closest_city %}
+                    {% endasvar %}
+                    {% if address_city %}
+                        <span>{{ address_city }},&ensp;</span>
+                    {% endif %}
+                    {% if place.state_province %}
+                        <span>{{ place.subregion.get_display_value }},&ensp;</span>
+                    {% endif %}
+                    {% if view.verbose_view and place.postcode %}
+                        <span>{{ place.get_postcode_display }}&ensp;</span>
+                    {% endif %}
+                    <span>{{ place.get_country_display }}</span>
+                {% endspaceless %}{% endfilter %}
+            </p>
+            {# END OF OWNER'S DETAILS #}
+
+            {# LOCATION ON WORLD MAP #}
+                {% include './snippets/place_map.html' with static_style='clqz4ixmi011j01r5c63y97b6' printed_map=True %}
+                <div class="static-map-auto-switch empty hidden-print">
+                    {# Needed to enable automatic switching to a static map in case WebGL cannot be used. #}
+                </div>
+            {# END OF LOCATION'S MAP #}
+        </div>
+    </div>
+{% endblock page %}

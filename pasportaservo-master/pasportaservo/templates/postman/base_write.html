@@ -1,0 +1,79 @@
+{% extends 'postman/base.html' %}
+{% load i18n static crispy_forms_tags expression profile privacy %}
+
+{% block extra_js %}
+    <script src="{% static 'js/forms.js' %}"></script>
+    <script src="{% static 'js/forms-validation.eo.js' %}"></script>
+{% endblock extra_js %}
+
+{% block extra_head %}
+    {{ block.super }}
+    {% if autocompleter_app.is_active %}
+        {% if autocompleter_app.name == 'ajax_select' %}
+            {% if autocompleter_app.version == '1.1.4' or autocompleter_app.version == '1.1.5' %}
+                <script type="text/javascript" src="{% static 'js/jquery.autocomplete.min.js' %}"></script>
+                <link type="text/css" media="all" rel="stylesheet" href="{% static 'css/jquery.autocomplete.css' %}" />
+            {% endif %}
+        {% endif %}
+    {% endif %}
+{% endblock %}
+
+{% block content %}
+    <div id="postman">
+        <h1>{% block pm_write_title %}{% endblock %}</h1>
+
+        {% if target_user.email|is_invalid and not target_user.profile.death_date %}
+            <div class="alert alert-danger">
+                <strong>{% trans "Warning " context "Title" %}</strong>&ensp;
+                {% trans "The user's email address seems invalid" %};
+                {% blocktrans with name=target_user.profile|get_pronoun trimmed %}
+                    {{ name }} might not know about your message.
+                {% endblocktrans %}
+
+                {% if target_user.profile.email and not target_user.profile.email|is_invalid %}
+                {% if-visible target_user.profile [email] privileged=view.author_is_authorized %}
+                    {% expr target_user.profile.email as shown_email %}
+                {% endif %}
+                {% endif %}
+                {% if target_public_phones %}
+                    {% expr target_public_phones[0] as shown_phone %}
+                {% endif %}
+                {% if shown_email or shown_phone %}
+                    <br />
+                    {% trans "Consider contacting the user by" %}&nbsp;
+                    {% if shown_email %}
+                        <span class="contact-details text-nowrap">
+                            {% spaceless %}
+                                <span>{{ target_user.profile|icon:'email' }}</span>
+                                <span class="person-email-address adjusted">{{ shown_email }}</span>
+                            {% endspaceless %}
+                        </span>
+                        {% if shown_phone %}
+                            {% trans " or " %}
+                        {% endif %}
+                    {% endif %}
+                    {% if shown_phone %}
+                        <span class="contact-details text-nowrap">
+                            {{ shown_phone.icon }} {{ shown_phone.number.as_international }}
+                        </span>
+                    {% endif %}
+                {% endif %}
+            </div>
+        {% elif target_user.profile.death_date %}
+            <div class="alert alert-danger">
+                {% blocktrans trimmed %}
+                    This user has passed away. It is not possible to send further messages.
+                {% endblocktrans %}
+            </div>
+        {% endif %}
+
+        <form action="{% if next_url %}?next={{ next_url|urlencode }}{% endif %}" method="post">
+            {% block pm_write_recipient %}{% endblock %}
+            {% crispy form %}
+            <button type="submit" class="btn btn-primary">
+                <span class="fa fa-share" aria-hidden="true"></span>&nbsp;
+                {% trans "Send" context "postman:action" %}
+            </button>
+        </form>
+    </div>
+{% endblock content %}

@@ -1,0 +1,36 @@
+{% extends 'email/base_email.html' %}
+{% load i18n domain %}
+{% load split from utils %}
+
+{% block heading %}{% trans "Email needs confirmation" %}{% endblock %}
+
+{% block preheader %}
+    {% blocktrans trimmed %}
+        You're receiving this email because you requested to change your email address at {{ site_name }}.
+    {% endblocktrans %}
+{% endblock preheader %}
+
+{% block body %}
+    {% trans "Please go to the following page to confirm your new email address:" %}
+        <br>
+    {% block reset_link %}
+        <a href="{% domain url %}">
+            {% domain %}{{ url_first }}<wbr>{{ url_second|split:'~45'|join:'<wbr>' }}
+        </a>
+    {% endblock %}
+        <br>
+        <br>
+    {% trans "Your username, in case you've forgotten:" %} <i>{{ user.username }}</i>
+        <br>
+        <br>
+    {% blocktrans trimmed %}
+        If it wasn't you who requested to use this email address at {{ site_name }},
+        you can safely ignore this message. The confirmation link will expire soon and
+        whoever requested the change will not be able to use your address.
+    {% endblocktrans %}
+{% endblock body %}
+
+{% block call_to_action %}
+    {% trans "Confirm email" as text %}
+    {% include 'email/snippets/button.html' %}
+{% endblock %}

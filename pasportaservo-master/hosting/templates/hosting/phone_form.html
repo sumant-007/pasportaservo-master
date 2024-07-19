@@ -1,0 +1,26 @@
+{% extends 'hosting/model_form.html' %}
+{% load i18n variable %}
+
+{% block head_title %}
+    {% trans "Phone number" %}
+    {% if phone %}
+        +{{ phone.number.country_code }}&thinsp;&hellip;{{ phone.number.as_e164|slice:"-3:" }}
+    {% endif %}
+    {% if view.role >= roles.SUPERVISOR %}
+        {% blocktrans with name=form.profile.name|default:_("user") %}of {{ name }}{% endblocktrans %}
+        {% if not form.profile.name %}#{{ form.profile.id }}{% endif %}
+    {% endif %}
+{% endblock %}
+
+{% block page %}
+    {% asvar admin_submit_condition %}{% if view.role == roles.ADMIN %}True{% endif %}{% endasvar %}
+    {{ block.super }}
+{% endblock %}
+
+{% block fields_after %}
+    {% if admin_submit_condition %}
+        <hr class="visible-xxs-block" />
+    {% endif %}
+{% endblock %}
+
+{% block form_submit_class %}{% if admin_submit_condition %} fullwidth-xxs{% endif %}{% endblock %}

@@ -1,0 +1,161 @@
+{% extends 'core/base.html' %}
+{% load i18n static cache utils %}
+
+{% block page_class %} page{% endblock %}
+{% block extra_css %}
+        {{ block.super }}
+        <style type="text/css">
+            h1 {
+                margin-bottom: 25px;
+            }
+            .language-switcher ~ h1 {
+                margin-top: 35px;
+            }
+            p {
+                margin: 0px;
+            }
+            .attribution {
+                font-size: .875em;
+                text-align: justify;
+            }
+        </style>
+{% endblock %}
+
+{% block head_title %}Internacia gastiga servo per Esperanto{% endblock %}
+{% block head_title_separator %}:{% endblock %}
+
+{% block page %}
+    {% get_user_language as user_locale %}
+    {% get_system_language as LANGUAGE_CODE %}
+    {% cache HOUR|mult:96 about-page-language-switcher LANGUAGE_CODE user_locale %}
+        {% with switch_context=True %}
+            {% language 'eo' %}
+                {% url 'about' as about_flatpages_prefix %}
+            {% endlanguage %}
+            {% include './snippets/language_switcher.html' with flatpages_prefix=about_flatpages_prefix %}
+        {% endwith %}
+    {% endcache %}
+
+    <h1>Pasporta Servo: Internacia gastiga servo per Esperanto</h1>
+
+    <div class="row vertical-align-not-xxs">
+        <div class="col-md-9 col-sm-10 col-xs-10 col-xxs-9">
+            <p>
+                Pasporta Servo estas adresaro de homoj el la tuta mondo, kiuj senpage akceptas gastojn en siaj hejmoj.
+                Por tio, la gasto(j) kaj la gastiganto(j) devas nur scipovi Esperanton.  La adreslibro 2017, unuafoje
+                kompostita laŭ aŭtomatigita maniero, enhavis 974 konfirmitajn gastigantojn el 81 landoj.
+                {% cache HOUR|mult:12 hosting-service-statistics %}
+                    Nuntempe en la servo estas registritaj {{ num_of_hosts }} gastigantoj el {{ num_of_countries }}
+                    landoj kaj ofertantaj gastigon en {{ num_of_cities }} diversaj urboj.
+                {% endcache %}
+            </p>
+        </div>
+        <div class="col-md-1 col-md-offset-1 col-sm-2 col-xs-2 col-xxs-3">
+            <div>
+                <img class="img-responsive" src="{% static 'img/about/map-marker.png' %}" alt="Simbolo: Mapo" />
+            </div>
+        </div>
+    </div>
+
+    <hr />
+
+    <div class="row">
+        <div class="col-md-1 col-md-offset-1 col-sm-2 col-xs-2 col-xxs-3">
+            <div>
+                <img class="img-responsive" src="{% static 'img/about/house.png' %}" alt="Simbolo: Domo" />
+            </div>
+        </div>
+        <div class="col-md-9 col-md-offset-1 col-sm-10 col-xs-10 col-xxs-9">
+            <p>
+                La gastigantoj indikas la kondiĉojn, ekz-e pri nefumado, aŭ la nombron de gastoj aŭ tranoktoj, kaj povas
+                mencii diversajn komentojn pri siaj interesoj, deziroj, atingebleco kaj simile. Gastigantoj ĝuas akcepti
+                homojn el diversaj landoj, gastoj ĝuas senpagan restadon, kaj ili facile interkomunikas per Pasporta
+                Servo en Esperanto. La praktikajn konsekvencojn de uzado de Pasporta Servo vidu en
+                <a href="https://youtu.be/hkQZUI5f_ck" target="_blank" rel="external noreferrer">filmeto de Oleg Zabolotnij</a>.
+                Ofte, gastigantoj helpas al la gastoj pri transportado, ekkoni la lokon, ktp.
+            </p>
+        </div>
+    </div>
+
+    <hr />
+
+    <div class="row vertical-align-not-xxs">
+        <div class="col-md-9 col-sm-10 col-xs-10 col-xxs-9">
+            <p>
+                Se vi havas iun ajn demandon, ne hezitu skribi al la teamo de PS:
+                <a href="mailto:{{ SUPPORT_EMAIL }}">{{ SUPPORT_EMAIL }}</a>
+                aŭ en la <a href="https://t.me/+AZriqUEz3jHNy0WnPAHbBQ" target="tgram">telegrama diskut-grupo</a>.
+            </p>
+        </div>
+        <div class="col-md-1 col-md-offset-1 col-sm-2 col-xs-2 col-xxs-3">
+            <div>
+                <img class="img-responsive" src="{% static 'img/about/internet-mail.png' %}" alt="Simbolo: Retpoŝto" />
+            </div>
+        </div>
+    </div>
+
+    <hr />
+
+    <div class="help-block" role="contentinfo">
+        <br />
+        <center class="attribution">
+            Aŭtorrajta atribuo:
+            La ĉefa piktograma tiparo estas
+              {% include './_xa.html' with URL="http://fontawesome.io" T="Font Awesome" %}
+              fare de Dave Gandy
+              laŭ licenco {% include './_xa.html' with URL="http://scripts.sil.org/OFL" T="SIL OFL 1.1" %}.
+            Iuj telefon-simboloj en piktograma tiparo de Pasporta Servo (“PS-Signaro”) estas bazitaj
+            sur konturoj el la tiparo
+              {% include './_xa.html' with URL="http://www.entypo.com/index.php" T="Entypo+" %}
+              fare de Daniel Bruce
+              kaj sub licenco {% include './_xa.html' with URL="https://creativecommons.org/licenses/by-sa/4.0/" T="<nobr>CC BY-SA 4.0</nobr>" %}.
+            La retpoŝt-kontakta piktogramo estas derivaĵo de libera verko far
+              {% include './_xa.html' with URL="http://bktnagency.com/2012/07/23/free-download-black-white-monochrome-outline-contact-icons" T="BKTN" %}.
+            La grafikaĵoj por Facebook (<i>Meta Platforms, Inc.</i>), Twitter (<i>X Corp.</i>),
+              Mastodon (<i>Mastodon gGmbH</i>&thinsp;), Telegram (<i>Telegram Messenger Inc.</i>),
+              YouTube (<i>YouTube, LLC</i>&thinsp;), kaj GitHub (<i>GitHub, Inc.</i>)
+              estas komercaj markoj de iliaj respektivaj posedantoj.
+            Simboloj por ĉiĉeronado kaj trinkejumado estas bazitaj sur piktog&shy;ramoj fare de
+              {% include './_xa.html' with URL="http://www.freepik.com" T="Freepik" %}
+              distribuitaj per
+              {% include './_xa.html' with URL="http://www.flaticon.com" T="flaticon.com" %}
+              kaj sub licenco {% include './_xa.html' with URL="http://creativecommons.org/licenses/by/3.0/deed.eo" T="<nobr>CC BY 3.0</nobr>" %}.
+            La retejo-identigaj grafikmarkoj kaj la respektivaj agordaj instrukcioj estis produktitaj
+            helpe de
+              {% include './_xa.html' with URL="http://realfavicongenerator.net" T="RealFaviconGenerator" %}.
+        </center>
+        <br />
+        <center class="attribution">
+            La kaheloj por la mapoj montritaj sur la retejo estas &copy; kaj servataj fare de
+              {% include './_xa.html' with URL="https://www.stadiamaps.com" T="Stadia Maps" %}
+              (<i>Stadia Maps, Ltd. Co.</i>)
+              surbaze de kartografiaj datumoj el
+              {% include './_xa.html' with URL="https://openmaptiles.org" T="OpenMapTiles" %}.
+            La tiparoj uzataj por mapaj etikedoj estas &copy; kaj servataj fare de
+              {% include './_xa.html' with URL="https://www.maptiler.com/copyright/" T="MapTiler" %}
+              (<i>Klokan Technologies GmbH</i>&thinsp;).
+            Ne-inter-agaj (statikaj) mapoj estas &copy; kaj servataj fare de
+              {% include './_xa.html' with URL="https://www.mapbox.com/about/maps/" T="Mapbox" %}
+              (<i>Mapbox, Inc.</i>).
+            Ĉiuj mapaj datenoj estas kopirajtitaj de OpenStreetMap Foundation kaj la kontribuantoj al
+              {% include './_xa.html' with URL="https://www.openstreetmap.org/copyright" T="OpenStreetMap" %}
+              laŭ licenco {% include './_xa.html' with URL="https://opendatacommons.org/licenses/odbl" T="ODbL" %}.
+            La malantaŭ la mapoj aperanta ŝarĝanimacio estas
+              {% include './_xa.html' with URL="https://gist.github.com/justvanrossum/3d39639f5fef54dfd630a5bc9fadc06c" T="generita" %}
+              pere de
+              {% include './_xa.html' with URL="http://www.drawbot.com" T="DrawBot" %}
+              far Just van Rossum.
+        </center>
+        <br />
+        <center class="attribution">
+            Datenoj pri poŝtformatoj kaj administraj unuoj de landoj estas ĉerpitaj el la elstara PHP-biblioteko
+              {% include './_xa.html' with URL="https://github.com/commerceguys/addressing" T="“addressing”" %},
+              kopirajto &copy; 2014&ndash;2023 Bojan Živanović kaj kontribu&shy;antoj
+              ({% include './_xa.html' with URL="https://commerceguys.com" T="<i>Commerce Guys</i>" %}),
+              laŭ licenco {% include './_xa.html' with URL="https://github.com/commerceguys/addressing/blob/master/LICENSE" T="MIT" %},
+            kaj el {% include './_xa.html' with URL="http://download.geonames.org/export/dump/countryInfo.txt" T="GeoNames" %}
+              (projekto de <nobr><i>Unxos GmbH</i>&thinsp;)</nobr>
+              laŭ licenco {% include './_xa.html' with URL="https://creativecommons.org/licenses/by/4.0/" T="<nobr>CC BY 4.0</nobr>" %}.
+        </center>
+    </div>
+{% endblock page %}

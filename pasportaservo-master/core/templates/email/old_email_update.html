@@ -1,0 +1,28 @@
+{% extends 'email/base_email.html' %}
+{% load i18n domain %}
+
+{% block heading %}{% trans "Email change" %}{% endblock %}
+
+{% block preheader %}
+    {% blocktrans trimmed %}
+        You're receiving this email because you (or someone on your behalf) requested a change
+        of your email address at {{ site_name }}
+    {% endblocktrans %}.
+{% endblock preheader %}
+
+{% block body %}
+    {% blocktrans trimmed %}
+        You're receiving this email because you (or someone on your behalf) requested a change
+        of your email address at {{ site_name }}
+    {% endblocktrans %}:
+        <br>
+        <strong>{{ email }}</strong>
+        <br>
+        <br>
+    {% trans "Your username, in case you've forgotten:" %} <i>{{ user.username }}</i>
+        <br>
+        <br>
+    {% trans "In case you did not request this change and you suspect it is a fraud, please contact us urgently!" %}
+{% endblock body %}
+
+{% block call_to_action %}{% endblock %}

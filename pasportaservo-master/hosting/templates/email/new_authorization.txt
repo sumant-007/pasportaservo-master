@@ -1,0 +1,27 @@
+{% load i18n domain %}{% autoescape off %}
+{% blocktrans with user_first_name=user.profile.name|default:user.username trimmed %}
+    Dear {{ user_first_name }},
+{% endblocktrans %}
+
+{% blocktrans with owner_name=place.owner.full_name|default:place.owner.user.username trimmed %}
+    You've been authorized to see the complete address of {{ owner_name }}!
+{% endblocktrans %}
+({% trans "A place in" %} {{ place }})
+
+{% blocktrans trimmed %}
+    Follow this link to see this accommodation:
+{% endblocktrans %}
+{% domain %}{% url 'place_detail_verbose' place.pk %}
+
+
+{% blocktrans trimmed %}
+    The {{ site_name }} team.
+{% endblocktrans %}
+
+{% if unsubscribe_url %}
+{% blocktrans trimmed %}
+    Unsubscribe from this type of messages
+{% endblocktrans %}:
+{% domain unsubscribe_url %}
+{% endif %}
+{% endautoescape %}

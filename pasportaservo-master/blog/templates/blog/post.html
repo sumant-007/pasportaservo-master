@@ -1,0 +1,41 @@
+{% load i18n %}
+{% load compact from utils %}
+<article class="blog-post">
+    <h{{ header_level|default:3 }} class="post-title clearfix">
+        <a href="{{ post.get_absolute_url }}">{{ post.title }}</a>
+        <small class="post-published pull-right">
+            <span class="sr-only">{% trans "published on" %} :</span>
+            {{ post.pub_date.date }}
+        </small>
+    </h{{ header_level|default:3 }}>
+
+    {% if quote %}<blockquote>{% endif %}
+        {{ post.description|safe }}
+
+        {% if post.has_more and more_type == "link" %}
+            {% spaceless %}
+            <a href="{{ post.get_absolute_url }}" class="post-more text-center text-nowrap {{ more_class }}">
+                <em>
+                    <span>{% trans "read more" %}</span>
+                    <span class="fa fa-long-arrow-alt-right" style="margin-left: 0.6em" aria-label="&#x279e;"></span>
+                </em>
+            </a>
+            {% endspaceless %}
+        {% endif %}
+        {% if post.has_more and more_type == "dots" %}
+            <p>
+                &nbsp;
+                {% filter compact %}
+                <span class="post-more help-block text-nowrap {{ more_class }}">
+                    [&nbsp;
+                    <a href="{{ post.get_absolute_url }}" style="color: inherit; text-decoration: none;"
+                       aria-label="{% blocktrans %}read more{% endblocktrans %}">
+                        &bull;&thinsp;&bull;&thinsp;&bull;
+                    </a>
+                    &nbsp;]
+                </span>
+                {% endfilter %}
+            </p>
+        {% endif %}
+    {% if quote %}</blockquote>{% endif %}
+</article>

@@ -1,0 +1,75 @@
+# Esperantaj tekstoĉenoj por reta Pasporta Servo.
+# Kopirajto (C) 2015, 2019 TEJO kaj kontribuantoj
+# Al tiu ĉi dosiero aplikiĝas la sama licenco kiel al la tuta kodo de PS.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: Pasporta Servo pasportaservo\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2019-10-25 16:00+0000\n"
+"POT-Revision-Date: 2024-01-02 05:02+0000\n"
+"Last-Translator: Meir <interDist@users.noreply.github.com>\n"
+"Language-Team: EO <saluton@pasportaservo.org>\n"
+"Language: eo\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#: core/static/js/ajax.js
+msgid ""
+"Something misfunctioned.<br>Please retry; if the error repeats itself, "
+"please <a href='%(url)s'>contact us</a>."
+msgstr ""
+"Io misfunkciis. Bonvole reprovu; <br class='visible-xxs-inline'>se la eraro "
+"denove okazas, <a href='%(url)s'>kontaktu nin</a>."
+
+#: core/static/js/ajax.js
+msgid "Server error"
+msgstr "Servila eraro"
+
+#: core/static/js/forms.js
+msgid "Nothing found for"
+msgstr "Nenio trovita por"
+
+#: core/static/js/forms.js
+msgid "Are you sure you are %(age)s year old?"
+msgid_plural "Are you sure you are %(age)s years old?"
+msgstr[0] "Ĉu vi certas ke vi aĝas %(age)s jaron?"
+msgstr[1] "Ĉu vi certas ke vi aĝas %(age)s jarojn?"
+
+#: core/static/js/forms.js
+msgid "select one of the suggestions"
+msgstr "elektu unu el inter la proponoj"
+
+#: core/static/js/place-location.js
+msgid "Bad or impossible coordinates."
+msgstr "Malbone tajpitaj aŭ neeblaj koordinatoj."
+
+#: core/static/js/place-location.js
+msgid "Alternatively: "
+msgstr "Alternative: "
+
+#: core/static/js/scripts.js
+msgid "Loading ▪ ▪ ▪"
+msgstr "Ŝargata ▪ ▪ ▪"
+
+#: core/static/js/scripts.js
+msgid "Close"
+msgstr "Fermi"
+
+#: core/static/js/scripts.js
+msgid "Cannot show the image. Please try again."
+msgstr "Ne eblas montri la bildon. Bv provu denove."
+
+#: core/static/js/settings.js
+msgid "You have not yet saved the privacy settings."
+msgstr "Vi ne jam konservis la agordojn de privateco."
+
+#: maps/static/maps/mapbox-gl-widget.js
+msgid "Please zoom in the map to select a point."
+msgstr "Bonvole pliproksimigu la mapon por elekti punkton."
+
+#: maps/static/maps/world-map.js
+msgid " from <strong>[CITY]</strong>"
+msgstr " de <strong>[CITY]</strong>"

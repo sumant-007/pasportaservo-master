@@ -1,0 +1,145 @@
+{% extends 'core/base.html' %}
+{% load i18n utils expression variable %}
+
+{% block head_title %}{% trans "Agreement between You and" %}{% endblock %}
+{% block head_title_separator %}{% endblock %}
+
+{% block page %}
+    <div class="row">
+        <div class="alert {% if consent_required %}alert-warning{% else %}alert-success{% endif %} top-notice">
+            {% if consent_required %}
+                <p>
+                    <strong>
+                        {% if consent_required.given_for %}
+                            {% blocktrans trimmed %}
+                                Dear member of the PS-community, your attention is required. Since
+                                {{ effective_date }} a new policy and conditions of use are in effect.
+                            {% endblocktrans %}
+                        {% else %}
+                            {% blocktrans trimmed %}
+                                Dear member of the PS-community, your attention to the policy and
+                                conditions of use is required.
+                            {% endblocktrans %}
+                        {% endif %}
+                    </strong>
+                </p>
+                <br />
+                <p>
+                    {% blocktrans trimmed %}
+                        This policy details the ways in which your information is being collected and
+                        treated, and <em>what</em> information you are required to provide to be part
+                        of the community.
+                        This document acts as a contract between Pasporta Servo and you, the user.
+                        Your continuous use of Pasporta Servo indicates your confirmation that you
+                        read the document, understand it, and agree to the conditions herein.
+                    {% endblocktrans %}
+                    {% if consent_required.given_for %}
+                        {% asvar privacy_link trimmed %}
+                            {% spaceless %}
+                                <a href="{% url 'privacy_policy' %}" class="text-warning">
+                                    <u>
+                            {% endspaceless %}
+                        {% endasvar %}
+                        {% asvar end_privacy_link trimmed %}
+                            {% spaceless %}
+                                    </u>
+                                </a>
+                            {% endspaceless %}
+                        {% endasvar %}
+                        {% blocktrans trimmed %}
+                            Earlier versions can be reviewed at the
+                            {{ privacy_link }}privacy policy{{ end_privacy_link }} page.
+                        {% endblocktrans %}
+                    {% endif %}
+                </p>
+            {% elif consent_obtained.given_for != consent_obtained.current.first.version %}
+                <p>
+                    {% blocktrans trimmed %}
+                        You have already indicated your consent to be bound by the policy, published
+                        earlier. An updated text of that policy as of {{ effective_date }} (below)
+                        includes some adjustments but does not introduce any changes in the substance.
+                    {% endblocktrans %}
+                </p>
+            {% else %}
+                <p>
+                    {% blocktrans trimmed %}
+                        You have already indicated your consent to be bound by the most up-to-date
+                        policy, which is in effect starting on {{ effective_date }}.
+                    {% endblocktrans %}
+                </p>
+            {% endif %}
+        </div>
+    </div>
+
+    {% if view.terms %}
+        <div id="user-terms-panel" class="panel {% if consent_required %}panel-warning{% else %}panel-default{% endif %}">
+            <div class="panel-body">
+                <h1>{% trans "Conditions of Usage of Pasporta Servo" %}</h1><br />
+                <blockquote>
+                    <ul>
+                        {% for terms_condition in view.terms %}
+                            {% if terms_condition.strip %}
+                                <li>
+                                    <b>{{ terms_condition.strip|split|slice:':4'|safeseq|join:" " }}</b>
+                                    {{ terms_condition.strip|split|slice:'4:'|safeseq|join:" " }}
+                                </li>
+                            {% endif %}
+                        {% endfor %}
+                    </ul>
+                </blockquote>
+            </div>
+        </div>
+    {% endif %}
+
+    <div id="user-agreement-panel" class="panel {% if consent_required %}panel-warning{% else %}panel-default{% endif %}">
+        <div class="panel-body">
+            <h1>{% trans "Policy of Privacy within Pasporta Servo" %}</h1><br />
+            {% if consent_required and consent_required.given_for or consent_obtained %}
+                {% expr consent_required or consent_obtained as presented_policy %}
+                {% if presented_policy.summary %}
+                    <div class="panel panel-info">
+                        <div class="panel-heading" id="policy-changes-header" role="button"
+                             data-toggle="collapse" data-target="#policy-changes" aria-controls="policy-changes"
+                             aria-expanded="true">
+                            <div class="panel-title">
+                                {% trans "Summary of the changes" %}
+                            </div>
+                        </div>
+                        <div class="panel-collapse collapse in" id="policy-changes"
+                             aria-labelledby="policy-changes-header" aria-live="off">
+                            <div class="list-group" role="list">
+                            {% for specific_policy_date, specific_policy_changes in presented_policy.summary %}
+                                <div class="list-group-item" role="listitem">
+                                    {% if presented_policy.summary|length > 1 %}
+                                        <p>
+                                            {% blocktrans with date=specific_policy_date trimmed %}
+                                                On {{ date }} :
+                                            {% endblocktrans %}
+                                        </p>
+                                    {% endif %}
+                                    {{ specific_policy_changes|safe }}
+                                </div>
+                            {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                    <br />
+                {% endif %}
+            {% endif %}
+            {{ view.agreement }}
+        </div>
+        <div class="panel-footer text-center clearfix hidden-print">
+            <form action="" method="POST" class="pull-right">
+                {% csrf_token %}
+                <button type="submit" id="id_approve" name="action" value="approve" class="btn btn-primary btn-vert-space">
+                    <span class="fa fa-regular fa-thumbs-up fa-lg fa-spacer-right" aria-hidden="true"></span>
+                    {% if consent_required %}{% trans "I agree" %}{% else %}{% trans "I still agree" %}{% endif %}
+                </button>
+                <button type="submit" id="id_reject" name="action" value="reject" class="btn btn-danger btn-vert-space">
+                    <span class="fa fa-regular fa-thumbs-down fa-lg fa-spacer-right" aria-hidden="true"></span>
+                    {% trans "I DO NOT agree" %}
+                </button>
+            </form>
+        </div>
+    </div>
+{% endblock page %}

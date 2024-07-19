@@ -1,0 +1,79 @@
+{% load i18n variable %}
+{% load next from utils %}
+{% load is_supervisor_of from profile %}
+
+{% if place.family_is_anonymous %}
+    {% if show_anonymously %}
+        <li>
+            <i>{% trans "Other dwellers at this place." %}</i>
+        </li>
+    {% endif %}
+{% else %}
+    {% delvar global any_family_members_displayed %}
+    {% for member in place.family_members_cache %}
+        {% asvar show_as_family_member trimmed %}
+            {% if not member.deleted %}
+                True
+            {% endif %}
+            {% if member.deleted and view.role >= roles.SUPERVISOR %}
+                True
+            {% endif %}
+        {% endasvar %}
+        {% if show_as_family_member %}
+            {% asvar global any_family_members_displayed %}True{% endasvar %}
+            <li class="family-member">
+                {% spaceless %}
+                {# INFORMATION ABOUT FAMILY MEMBER, AND IF APPLICABLE, LINK TO THE PROFILE #}
+                    {% if member.user_id %}
+                        <a href="{{ member.get_absolute_url }}"
+                           data-toggle="popover" data-trigger="hover focus" data-placement="top"
+                           data-content="<img src='{{ member.avatar_url }}' height='90'>" data-html="true">
+                    {% endif %}
+                        <span {% if member.deleted %}class="text-muted" title="{% trans "Deleted profile" %}"{% endif %}>
+                            {% if not member.user_id and member.deleted %}
+                                <del datetime="{{ member.modified|date:"Y-m-d" }}">
+                            {% endif %}
+                                <span class="member">{{ member.get_fullname_always_display }}</span>
+                                {% if member.birth_date %}
+                                    <span class="comment">&ensp;({{ member.age }})</span>
+                                {% endif %}
+                            {% if not member.user_id and member.deleted %}
+                                </del>
+                            {% endif %}
+                        </span>
+                    {% if member.user_id %}
+                        </a>
+                    {% endif %}
+                {% endspaceless %}
+
+                {% if not member.deleted %}
+                {% if place_owner_or_supervisor or user|is_supervisor_of:member %}
+                    {% spaceless %}
+                    {# INLINE EDIT BUTTON FOR UPDATING FAMILY MEMBER'S PROFILE #}
+                        {% if not member.user_id %}
+                            <a href="{% url 'family_member_update' place.pk member.pk %}?{% next 'this page' %}"
+                               class="action-edit-inline text-label-success"
+                               title="{% trans "Update a family member" %}">
+                                <span class="fa fa-edit" aria-hidden="true"></span>
+                                <span class="sr-only">{% trans "Update" %}</span>
+                            </a>
+                        {% elif user|is_supervisor_of:member %}
+                            <a href="{% url 'profile_update' member.pk member.autoslug %}?{% next 'this page' %}"
+                               class="action-edit-inline text-label-success"
+                               title="{% trans "Update profile" %}">
+                                <span class="fa fa-edit" aria-hidden="true"></span>
+                                <span class="sr-only">{% trans "Update" %}</span>
+                            </a>
+                        {% endif %}
+                    {% endspaceless %}
+                {% endif %}
+                {% endif %}
+            </li>
+        {% endif %}
+    {% endfor %}
+    {% if not any_family_members_displayed %}
+        <li>
+            <i>{% trans "Please ask me privately." %}</i>
+        </li>
+    {% endif %}
+{% endif %}

@@ -1,0 +1,8 @@
+{% extends './base_toggle.html' %}
+{% load variable %}
+
+{% block choices %}
+    {% asvar toggle_widget_type %}radio{% endasvar %}
+    {{ block.super }}
+{% endblock %}
+{% block toggle_widget_label_classes %}{{ block.super }} {{ radio_label_class }}{% endblock %}

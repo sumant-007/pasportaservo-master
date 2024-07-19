@@ -1,0 +1,571 @@
+{% extends 'core/base.html' %}
+{% load i18n static expression variable profile privacy utils %}
+
+{% block head_title %}
+    {% if view.role == roles.OWNER %}
+        {% trans "My profile" %}
+    {% else %}
+        {{ profile.name|default:profile.INCOGNITO }}
+    {% endif %}
+{% endblock %}
+
+{% block extra_css %}
+        <link rel="stylesheet" href="{% static 'popup/magnific-popup.min.css' %}">
+{% endblock %}
+{% block extra_js %}
+        <script src="{% static 'popup/magnific-popup.min.js' %}"></script>
+        <script src="{% static 'sortable/Sortable.min.js' %}"></script>
+        <script src="{% static 'js/ajax.js' %}"></script>
+{% endblock %}
+
+{% block page_class %} profile-detail{% endblock %}
+
+{% block page %}
+    {% if request.user_has_profile and user.profile.has_places_for_in_book and not user.profile.places_confirmed %}
+    {# PAGE-TOP REQUEST TO APPROVE HOSTING DATA #}
+        <div class="row bg-info top-notice remove-after-success hidden-print">
+            {% if view.role != roles.OWNER %}
+                <p class="col-xs-12 text-center">
+                    {% url 'profile_edit' user.profile.pk user.profile.autoslug as current_user_profile %}
+                    {% blocktrans with url=current_user_profile trimmed %}
+                        Are <a href="{{ url }}">your data</a> up-to-date? Please check your hosting profile.
+                    {% endblocktrans %}
+                </p>
+            {% else %}
+                <form class="col-xs-12 text-center" action="{% url 'hosting_info_confirm' %}" method="POST">
+                    {% csrf_token %}
+                    {% blocktrans with tag="<span class='text-nowrap'>" endtag="</span>" trimmed %}
+                        Are your data up-to-date? {{ tag }}Click if yes{{ endtag }}
+                    {% endblocktrans %}&nbsp;
+                    <button class="btn btn-primary btn-sm push-right ajax" type="submit"
+                            data-csrf="{{ csrf_token }}"
+                            data-on-ajax-success="confirmInfoSuccess">
+                        <span class="fa fa-check fa-spacer-right" aria-hidden="true"></span>
+                        <span class="hidden-xxs">{% trans "I confirm!" %}</span>
+                    </button>
+                </form>
+            {% endif %}
+        </div>
+    {% endif %}
+
+    {% if profile|is_supervisor and not profile.user.is_superuser %}
+    {# PAGE-TOP INFORMATION ABOUT COUNTRIES SUPERVISED BY THIS USER #}
+        <div class="row bg-warning top-notice">
+            <p class="col-xs-12 text-center text-light">
+                {% blocktrans with countries=profile|supervisor_of|join:", " trimmed %}
+                    Supervisor of {{ countries }}
+                {% endblocktrans %}
+            </p>
+        </div>
+    {% endif %}
+
+    {% if profile.confirmed and view.role == roles.OWNER %}
+    {# PAGE-TOP CONFIRMATION OF HOSTING DATA APPROVAL #}
+        <div class="row bg-success top-notice">
+            <p class="col-xs-12 text-center">
+                {% trans "You confirmed your information" %}
+            </p>
+        </div>
+    {% endif %}
+
+        <div class="row profile-control">
+            <div id="pA" class="col-xs-12 col-md-5">
+                {% if profile.deleted %} {# VISITORs are barred from accessing deleted profiles, on View level #}
+                    <div class="alert alert-small alert-danger">
+                        <span class="fa fa-exclamation-circle fa-spacer-right" aria-label="{% trans "Warning " context 'Title' %}"></span>
+                        {% trans "Deleted profile" as delete_notice %}
+                        {% if view.role == roles.OWNER %}{% trans "Your profile is deleted and does not appear in search results." as delete_notice %}{% endif %}
+                        {{ delete_notice }}
+                    </div>
+                {% endif %}
+            </div>
+            <div id="pR" class="col-xs-12 col-md-7">
+                <div class="btn-group control-buttons">
+                    {% block profile_edit_buttons %}
+                        {% if view.role != roles.OWNER and not profile.deleted_on and not profile.death_date %}
+                            <a href="{% url 'postman:write' profile.user.username %}"
+                               class="btn btn-primary"
+                                {% if profile.user.email|is_invalid %}
+                                    title="{% trans "The user's email address seems invalid" %}"
+                                    data-toggle="tooltip" data-container="body" data-placement="bottom"
+                                {% endif %}
+                            >
+                                <span class="fa fa-paper-plane fa-spacer-right" aria-hidden="true"></span>
+                                <span class="hidden-xxs">{% trans "Write message" %}</span>
+                                <span hidden class="hidden"> / </span>
+                                <span class="visible-xxs-inline">{% trans "Chat" context "Verb" %}</span>
+                                {% if profile.user.email|is_invalid %}
+                                    <sup>
+                                        <span class="hidden" aria-hidden="true">&#9888;</span>
+                                        <span class="fa fa-exclamation-triangle" aria-hidden="true"></span>
+                                    </sup>
+                                {% endif %}
+                            </a>
+                        {% endif %}
+                        {% if view.role >= roles.OWNER %}
+                            {% trans "Update user's details" as update_title %}
+                            {% if view.role == roles.OWNER %}{% trans "Update my details" as update_title %}{% endif %}
+                            <a href="{% url 'profile_edit' profile.pk profile.autoslug %}"
+                               class="btn btn-success"
+                               title="{{ update_title }}"
+                               data-toggle="tooltip" data-container="body" data-placement="bottom">
+                                <span class="fa fa-pencil fa-spacer-right" aria-hidden="true"></span> {% trans "Modify account" %}
+                            </a>
+                        {% endif %}
+                    {% endblock %}
+                </div>
+                {% if perms.hosting.can_supervise %}
+                    {% if profile.confirmed %}
+                        {% trans "confirmed on" as confirm_title %}
+                        {% expr "text-success" as confirm_color %}
+                    {% elif profile.confirmed_on %}
+                        {% trans "last confirmed on" as confirm_title %}
+                        {% expr "text-warning" as confirm_color %}
+                    {% else %}
+                        {% trans "Not confirmed"|lower as confirm_title %}
+                        {% expr "text-warning" as confirm_color %}
+                    {% endif %}
+                    <div class="control-buttons btn history-link"
+                         title="{% trans "profile" %} {{ confirm_title }} {{ profile.confirmed_on|date:"DATE_FORMAT" }}"
+                         data-title="{% trans "profile" %} {{ confirm_title }} <br /> {{ profile.confirmed_on|date:"DATE_FORMAT" }}"
+                         data-toggle="tooltip" data-placement="left auto" data-html="true">
+                        <span class="fa fa-regular fa-rectangle-list {{ confirm_color }}"></span>
+                        <span class="fa fa-regular fa-square{{ profile.confirmed|yesno:"-check," }} {{ confirm_color }}"></span>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+    <section class="row owner{% if profile.death_date %} deceased{% endif %}">
+        <div class="col-xs-3 col-md-2">
+            {% if profile.avatar_exists and profile.avatar.width > profile.avatar.height|mult:1.5 %}
+                {% expr True as narrow_avatar %}
+            {% endif %}
+            <span class="avatar"{% if narrow_avatar %} data-narrow{% endif %} data-content-provider="fa" data-content="&#xf00e;">
+                <img src="{{ profile.avatar_url }}"
+                     data-mfp-src="{{ profile.avatar_url }}"
+                     {% if profile.avatar %}data-proper-url="{{ profile.avatar.url }}"{% endif %}
+                     alt="[{% trans "avatar" %}]" />
+            </span>
+        </div>
+        <div class="col-xs-9 col-md-10">
+            {% if profile.death_date %}
+                <p class="sr-only">{% trans "Deceased member" %} :</p>
+            {% endif %}
+            <h1 class="name{% if narrow_avatar %} align-top{% endif %}">
+                <small>{{ profile.get_title_display }}</small>
+                {% if view.role >= roles.SUPERVISOR and not profile.first_name and not profile.last_name %}
+                    {{ profile.INCOGNITO }}
+                {% endif %}
+                {{ profile.get_fullname_display }}
+            </h1>
+            <p>
+                {% if profile.birth_date %}
+                    {% blocktrans with age=profile.age %}{{ age }} y.o.{% endblocktrans %}
+                    &nbsp;
+                {% endif %}
+                {% include './snippets/checked.html' with object=profile %}
+            </p>
+            {% if profile.user.email|is_invalid and view.role == roles.OWNER %}
+                <p class="alert alert-small alert-danger" style="margin-bottom: 0">
+                    <span class="sr-only">{% trans "Warning " context 'Title' %}:</span>
+                    <span class="small">
+                        {% trans "The email address associated with your account seems invalid; PS will not be able to send you updates." %}
+                    </span>
+                    <a href="{% url 'profile_settings' profile.pk profile.autoslug %}#{% trans "email-addr" context 'URL' %}"
+                       class="small hidden-print">
+                        {% spaceless %}
+                            <span>{% trans "Check the settings" %}</span>
+                            <span class="fa fa-solid fa-long-arrow-alt-right fa-spacer-left-2x" aria-hidden="true"></span>
+                        {% endspaceless %}
+                        <span class="sr-only">&#8594;</span>
+                    </a>
+                </p>
+            {% endif %}
+        </div>
+        {% if view.role >= roles.SUPERVISOR %}
+            <div class="col-xxs-12 col-xs-8 col-sm-9">
+                <h4>
+                    <small>{% trans "username"|capfirst %}</small>
+                    <br class="visible-xxs-inline" />
+                    <span class="person-username">{{ profile.user.username }}</span>
+                </h4>
+                <h4>
+                    <small class="visible-xxs-inline">{% trans "email address"|capfirst %}</small>
+                    <br class="visible-xxs-inline" />
+                    <span class="email person-email-address">
+                        {{ profile.user.email|clear_invalid }}&nbsp;
+                        {% if profile.user.email|is_invalid %}
+                            <small class="text-danger fa fa-exclamation-triangle"
+                                   aria-label="{% trans "Warning " context 'Title' %}: {% trans "invalid email" %}"
+                                   title="{% trans "invalid email" %}" data-toggle="tooltip"></small>
+                        {% endif %}
+                    </span>
+                    {% if not profile.user.email|is_invalid %}
+                        {% if not view.public_view %}
+                            {% include './snippets/email_mark_invalid.html' with return_url='this page' extra_class="control-buttons" %}
+                        {% endif %}
+                    {% endif %}
+                </h4>
+                <h4>
+                    <small>{% trans "last login"|capfirst %}</small>
+                    <br class="visible-xxs-inline" />
+                    <span class="">{{ profile.user.last_login|date:"DATE_FORMAT"|default:_("never") }}</span>
+                </h4>
+            </div>
+        {% endif %}
+    </section>
+
+    <hr />
+
+    {% if view.role >= roles.SUPERVISOR %}
+        {% spaceless %}
+            {% asvar last_editor trimmed %}
+                {% if profile.checked %}
+                    {% trans "by a supervisor" %}
+                {% else %}
+                    {% trans "owner" %}
+                {% endif %}
+            {% endasvar %}
+            <span class="timestamp timestamp-edit pull-right text-muted"
+                  title="{% trans "last modification" %}"
+                  data-title="{% trans "last modification" %}:<br />{{ profile.modified }}"
+                  data-toggle="tooltip" data-placement="top" data-html="true">
+                <small class="fa fa-regular fa-edit" aria-hidden="true"></small>
+                <span class="sr-only">{% trans "last modification" %}</span>
+                <small><samp> {{ profile.modified|date:"Y-m-d H:i" }} UTC</samp></small>
+            </span>
+        {% endspaceless %}
+    {% endif %}
+
+    <section>
+        <h2 class="owner">{% trans "About me" %}</h2>
+        {% if profile.death_date %}
+            <p class="text-danger">
+                <em>
+                {% blocktrans with name=profile.name|default:_("this member") month_of_year=profile.death_date|date:"F Y" trimmed %}
+                    It is with great regret that we inform that {{ name }} has passed away in {{ month_of_year }}.
+                {% endblocktrans %}
+                </em>
+            </p>
+        {% endif %}
+        {{ profile.description|linebreaks }}
+        {% if profile.gender or profile.pronoun %}
+            <p>
+                <span class="text-muted"><span class="fa fa-transgender"></span></span>
+                {% filter cut:"<span>"|cut:"</span>" %}{% spaceless %}
+                    {% if profile.gender %}
+                        {% asvar of_gender trimmed %}
+                            {% get_system_language as LANGUAGE_CODE %}
+                            {% if profile.gender.name_en or LANGUAGE_CODE == 'eo' %}
+                                {{ profile.gender }}
+                            {% else %}
+                                <i lang="eo">{{ profile.gender.name }}</i>
+                            {% endif %}
+                        {% endasvar %}
+                        <span>{% blocktrans %}I am {{ of_gender }}{% endblocktrans %}</span>
+                        <span>{% if profile.pronoun %}; {% else %}. {% endif %}</span>
+                    {% endif %}
+                    {% if profile.pronoun %}
+                        {% if profile.pronoun == profile.Pronouns.ANY %}
+                            <span>{% trans "Talking about me, you may use any pronoun." %}</span>
+                        {% else %}
+                            <span>{% blocktrans with pronoun=profile|format_pronoun:"<em>" trimmed %}
+                                        Talking about me, please use the pronoun {{ pronoun }}.
+                                  {% endblocktrans %}</span>
+                        {% endif %}
+                    {% endif %}
+                {% endspaceless %}{% endfilter %}
+            </p>
+        {% endif %}
+        <p>
+            {% if phones_public and not profile.death_date %}
+                <span class="contact-details text-nowrap">
+                    <span class="text-muted">{{ phones_public.0.icon }}</span>
+                    {{ phones_public.0.number.as_international }}
+                    {% block public_phone_edit_buttons %}{% endblock %}
+                </span>&ensp;
+            {% endif %}
+            {% if profile.email and not profile.email|is_invalid and not profile.death_date %}
+            {% if-visible profile [email] %}
+                <span class="contact-details text-nowrap">
+                    {% spaceless %}
+                        <span class="text-muted">{{ profile|icon:'email' }}</span>
+                        <span class="person-email-address adjusted">{{ profile.email|clear_invalid }}</span>
+                    {% endspaceless %}
+                    {% block public_email_edit_buttons %}{% endblock %}
+                </span>
+            {% endif %}
+            {% endif %}
+        </p>
+    </section>
+
+    <hr />
+
+    {% if places or not view.public_view %}
+        <h2 class="owner">
+            {% if view.public_view %}
+                {% expr profile.is_hosting as accommodation_count %}
+            {% else %}
+                {% expr profile.has_places_for_hosting as accommodation_count %}
+            {% endif %}
+            {% if places.count == accommodation_count %}
+                {% blocktrans count counter=places|length trimmed %}
+                    Place
+                {% plural %}
+                    Places
+                {% endblocktrans %}
+            {% else %}
+                {% blocktrans count counter=places|length trimmed %}
+                    Habitat
+                {% plural %}
+                    Habitats
+                {% endblocktrans %}
+            {% endif %}
+        </h2>
+    {% endif %}
+    {% for place in places %}
+        {% if view.role == roles.OWNER or user|is_supervisor_of:place %}
+            {% expr True as place_owner_or_supervisor %}
+        {% else %}
+            {% expr False as place_owner_or_supervisor %}
+        {% endif %}
+        <ul class="list-group">
+            <li class="{% filter compact %}
+                            list-group-item owned-place
+                            {% if perms.hosting.can_supervise and place.checked %}text-success{% endif %}
+                            {% if not place.visibility.online_public %}concealed{% endif %}
+                       {% endfilter %}"
+                id="p{{ place.pk }}" aria-label="{% trans "place"|capfirst %}: {{ place }}">
+                <div class="sr-only">&#8962;&nbsp; <em>{% trans "place"|upper %} {{ forloop.counter }}</em></div>
+                <div class="btn-group control-buttons pull-right">
+                    {% block place_edit_buttons %}{% endblock %}
+                    <a href="{% url 'place_detail' place.pk %}"
+                       class="btn btn-primary"
+                       title="{% trans "View details of this place" %}"
+                       data-toggle="tooltip" data-container="#p{{ place.pk }}">
+                        <span class="fa fa-arrow-right" aria-hidden="true"></span>
+                        <span class="{% if view.public_view %}hidden-xxs{% else %}hidden-xs{% endif %}">{% trans "View" %}</span>
+                    </a>
+                </div>
+                {% if view.public_view %}
+                    <p class="pull-right" style="margin: 0px 10px 10px">{% include './snippets/checked.html' with object=place %}</p>
+                    <div class="place-overview{% if profile.death_date %} deceased-owner{% endif %}">
+                        {% if place.available and not profile.death_date %}
+                            <span class="label label-info">&nbsp;{% trans "I'm hosting in:" %}&nbsp;</span>
+                        {% endif %}
+
+                        {% if place.city %}
+                            <h3>{{ place.city }}</h3>
+                        {% endif %}
+                        {% if place.closest_city %}
+                            <h4>
+                                <span class="fa fa-regular fa-hand-point-right small" aria-hidden="true"></span>
+                                {% blocktrans with closest_city=place.closest_city %}near {{ closest_city }}{% endblocktrans %}
+                            </h4>
+                        {% endif %}
+                        {% if place.state_province %}
+                            <h4>{{ place.subregion.translated_or_latin_name }}</h4>
+                        {% endif %}
+                        <h4>{{ place.get_country_display }}</h4>
+
+                        <div class="anchor-group">
+                            {% if place.available %}
+                                {% list place.tour_guide place.have_a_drink place.max_guest place.max_night as offer_details %}
+                            {% else %}
+                                {% list place.tour_guide place.have_a_drink as offer_details %}
+                            {% endif %}
+                            {% if offer_details|are_any %}
+                                <span class="sr-only">{% trans "Notes " context 'Title' %}:</span>
+                                {% blocktrans count max_host=place.max_guest|default:0 asvar desc_max_guest trimmed %}
+                                    I can accept {{ max_host }} person
+                                {% plural %}
+                                    I can accept {{ max_host }} persons
+                                {% endblocktrans %}
+                                {% blocktrans count max_night=place.max_night|default:0 asvar desc_max_night trimmed %}
+                                    I can host during {{ max_night }} night maximum
+                                {% plural %}
+                                    I can host during {{ max_night }} nights maximum
+                                {% endblocktrans %}
+                                {% dict icon="ps-city-guide-fh" info=_("I can guide around the city")       as style_guide %}
+                                {% dict icon="ps-city-drink-fh" info=_("I'd like to have a drink together") as style_drink %}
+                                {% dict icon="fa-street-view"   info=place.max_guest  title=desc_max_guest  as style_guest %}
+                                {% dict icon="fa-moon"          info=place.max_night  title=desc_max_night  as style_night %}
+
+                                {% cycle style_guide style_drink style_guest style_night as offer_style silent %}
+                                {% for clause in offer_details %}
+                                    {% if clause %}
+                                        <div class="anchor-group-item anchor-vert-space-even"
+                                             {% if offer_style.title %}title="{{ offer_style.title }}" data-toggle="tooltip" data-placement="bottom"{% endif %}>
+                                            <span class="place-anchor text-label-info" aria-hidden="true"><span class="fa {{ offer_style.icon }}"></span></span>
+                                            <span class="label label-info status"{% if offer_style.title %} aria-hidden="true"{% endif %}>{{ offer_style.info }}</span>
+                                            {% if offer_style.title %}
+                                                <span class="label label-info status sr-only">{{ offer_style.title|lower }}</span>
+                                            {% endif %}
+                                        </div>
+                                    {% endif %}
+                                    {% cycle offer_style %}
+                                {% endfor %}
+                                {% resetcycle offer_style %}
+                            {% endif %}
+                            {% if place.short_description %}
+                                {% if not offer_details|are_any %}
+                                    <span class="sr-only">{% trans "Note " context 'Title' %}:</span>
+                                {% endif %}
+                                <div class="anchor-group-item anchor-vert-space-even">
+                                    <mark class="description-short small text-muted">
+                                        <span aria-label="{% trans "Description" %}" class="fa fa-info-circle"></span> {{ place.short_description }}
+                                    </mark>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                {% else %}
+                    {% if not place.visibility.online_public %}
+                        {% trans "not displayed to other users" as concealed_title %}
+                        {% if perms.hosting.can_supervise %}
+                            <p class="pull-left">
+                                <span class="conceal-marker">
+                                    <span class="fa fa-eye-slash text-muted" aria-hidden="true"
+                                          title="{{ concealed_title }}" data-toggle="tooltip"></span>
+                                </span>
+                            </p>
+                        {% else %}
+                            <span class="conceal-marker fa fa-eye-slash pull-left text-muted" aria-hidden="true"
+                                  title="{{ concealed_title }}" data-toggle="tooltip"></span>
+                        {% endif %}
+                        <span class="sr-only">[{% trans "Note " context 'Title' %}: {{ concealed_title }}]</span>
+                    {% endif %}
+                    <div>
+                        {% if perms.hosting.can_supervise %}
+                            <p>{% include './snippets/checked.html' with object=place %}</p>
+                        {% endif %}
+                        <h3>{{ place.address.strip }}</h3>
+                        <h4>{% include './snippets/place_city_complete.html' with city=place.city closest_city=place.closest_city %}</h4>
+                        {% if place.state_province %}
+                            <h4>{{ place.subregion.translated_or_latin_name }}</h4>
+                        {% endif %}
+                        <h4>{{ place.get_postcode_display }} {{ place.get_country_display }}</h4>
+                    </div>
+
+                    <ul class="list-group" aria-label="{% trans "Family members" %}">
+                        {% for member in place.family_members_cache %}
+                            <li class="list-group-item list-vertical-align">
+                                {% block family_member_edit_buttons %}{% endblock %}
+
+                                <p class="family-member {% if member.deleted %}text-muted{% endif %}">
+                                    {{ member.icon }}
+                                    {% spaceless %}
+                                    <b class="member">
+                                        {% if member.deleted %}
+                                            <del datetime="{{ member.modified|date:"Y-m-d" }}" title="{% trans "Deleted profile" %}">
+                                        {% endif %}
+                                        {{ member.get_fullname_always_display }}
+                                        {% if member.deleted %}
+                                            </del>
+                                        {% endif %}
+                                    </b>
+                                    {% endspaceless %}
+                                    {% if member.birth_date %}<i class="comment">({{ member.age }})</i>{% endif %}
+                                </p>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                {% endif %}
+
+                {% block family_member_add_buttons %}{% endblock %}
+            </li>
+        </ul>
+    {% endfor %}
+
+    {% block place_add_buttons %}{% endblock %}
+
+    {% if not view.public_view %}
+        <hr />
+
+        <h2 class="owner">{% trans "Phones" %}</h2>
+        <ul class="list-group phone-list" aria-label="{% trans "Phones" %}"
+            data-ajax-action="{% url 'profile_phone_order_change' profile.pk profile.autoslug %}"
+            data-csrf="{{ csrf_token }}">
+            {% for phone in phones %}
+                {% delvar concealed_class concealed_title %}
+                {% if not phone.visibility.online_public %}
+                    {% asvar concealed_class %}concealed{% endasvar %}
+                    {% asvar concealed_title %}{% trans "not displayed to other users" %}{% endasvar %}
+                {% endif %}
+                {% if not phone.visibility.online_public and phone.visibility.online_authed %}
+                    {% asvar concealed_class %}concealed-partially{% endasvar %}
+                    {% asvar concealed_title %}{% trans "displayed to guests and hosts only" %}{% endasvar %}
+                {% endif %}
+                <li class="{% filter compact %}
+                               list-group-item owned-phone list-vertical-align
+                               {% if phones|length > 1 %} draggable {% endif %}
+                               {{ concealed_class }}
+                           {% endfilter %}"
+                    id="t{{ phone.pk }}">
+                    {% block phone_priority_buttons %}{% endblock %}
+                    {% if phones|length > 1 %}<span class="grabzone"></span>{% endif %}
+                    {% block phone_edit_buttons %}{% endblock %}
+
+                    <p class="phone-number">
+                        {{ phone.icon }}
+                        <b class="number">{{ phone.number.as_international }}</b>
+                        {% if concealed_title %}
+                            <span class="conceal-marker fa fa-eye-slash" aria-hidden="true"
+                                  title="{{ concealed_title }}" data-toggle="tooltip"></span>
+                            <span class="sr-only">[{% trans "Note " context 'Title' %}: {{ concealed_title }}]</span>
+                        {% endif %}
+                        <br class="visible-xs-inline" />
+                        <i class="comment">{{ phone.comments }}</i>
+                    </p>
+                </li>
+            {% endfor %}
+        </ul>
+        {% block phone_add_buttons %}{% endblock %}
+
+        <hr />
+
+        {% if profile.email %}
+            <h2 class="owner">{% trans "Public email address" %}</h2>
+            <ul class="list-group">
+                {% delvar concealed_class concealed_title concealed_reason %}
+                {% if not profile.email_visibility.online_public and profile.email_visibility.online_authed  %}
+                    {% asvar concealed_class %}concealed-partially{% endasvar %}
+                    {% asvar concealed_title %}{% trans "displayed to guests and hosts only" %}{% endasvar %}
+                {% endif %}
+                {% if not profile.email_visibility.online_public and not profile.email_visibility.online_authed or profile.email|is_invalid %}
+                    {% asvar concealed_class %}concealed{% endasvar %}
+                    {% asvar concealed_title %}{% trans "not displayed to other users" %}{% endasvar %}
+                    {% if profile.email|is_invalid %}
+                        {% asvar concealed_reason %}{% trans "this email address seems invalid" %}{% endasvar %}
+                    {% endif %}
+                {% endif %}
+
+                <li class="list-group-item owned-email list-vertical-align {{ concealed_class }}"
+                    id="e{{ profile.pk }}" aria-label="{% trans "Public email address" %}">
+                    {% block email_edit_buttons %}{% endblock %}
+
+                    <p class="public-email text-nowrap">
+                        {{ profile|icon:'email' }}
+                        {% if profile.email|is_invalid %}
+                            <span class="number person-email-address"
+                                  data-toggle="tooltip" title="{{ concealed_reason }}" aria-label="{% trans "Warning " context 'Title' %}: {{ concealed_reason }}">
+                                {{ profile.email|clear_invalid }}
+                                <span class="fa fa-exclamation-triangle text-danger" aria-hidden="true"></span>
+                            </span>
+                        {% else %}
+                            <span class="number person-email-address">
+                                {{ profile.email }}
+                            </span>
+                        {% endif %}
+                        {% if concealed_title %}
+                            <span class="conceal-marker fa fa-eye-slash" aria-hidden="true"
+                                  title="{{ concealed_title }}{% if concealed_reason %} – {{ concealed_reason }}{% endif %}" data-toggle="tooltip"></span>
+                            <span class="sr-only">[{% trans "Note " context 'Title' %}: {{ concealed_title }}{% if concealed_reason %} – {{ concealed_reason }}{% endif %}]</span>
+                        {% endif %}
+                    </p>
+                </li>
+            </ul>
+        {% endif %}
+    {% endif %}
+{% endblock page %}

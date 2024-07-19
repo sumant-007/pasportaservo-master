@@ -1,0 +1,11 @@
+{% extends 'email/username_remind.txt' %}
+{% load i18n %}
+
+{% block additional_information %}
+{% blocktrans trimmed %}
+    Unfortunately, you deactivated your account previously, and first it needs to be re-activated.
+{% endblocktrans %}
+{% trans "Reply to this email message if you would like to re-activate the account;" %} {% trans "An administrator will contact you soon." %}
+
+REF# {{ restore_request_id }}
+{% endblock %}

@@ -1,0 +1,39 @@
+{% spaceless %}
+{% load i18n %}
+
+{% if place.available %}
+    <em>{% trans "I'm hosting"|capfirst %} :)</em>
+{% else %}
+    <em>{% trans "I'm <b>not</b> hosting"|capfirst %}</em>
+{% endif %}
+
+{% if place.owner_available %}
+    {% if place.available %}
+        <i>{% trans "&nbsp; and will be glad " %}</i>
+    {% else %}
+        <i>{% trans ", but will be glad " %}</i>
+    {% endif %}
+
+    {% if place.tour_guide %}
+        {% with my_city=place.city|default:_("city") %}
+            <i>{% blocktrans trimmed %}
+                to guide you around {{ my_city }}
+            {% endblocktrans %}</i>
+        {% endwith %}
+        {% if place.have_a_drink %}
+            <i>{% trans " or " %}</i>
+        {% endif %}
+    {% endif %}
+
+    {% if place.have_a_drink %}
+        {% if place.tour_guide %}
+            <i>{% trans "to have a drink together" %}</i>
+        {% else %}
+            <i>{% trans "to have a drink together in the city" %}</i>
+        {% endif %}
+    {% endif %}
+
+    <i>.</i>
+{% endif %}
+
+{% endspaceless %}

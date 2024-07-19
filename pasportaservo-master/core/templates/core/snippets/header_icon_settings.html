@@ -1,0 +1,18 @@
+{% load i18n %}
+{% load compact from utils %}
+
+        <a href="{% filter compact %}
+                    {% if request.user_has_profile or request.user_has_profile is None and user.profile %}
+                        {% url 'profile_settings_shortcut' %}
+                    {% else %}
+                        {% url 'account_settings' %}
+                    {% endif %}
+                 {% endfilter %}" class="linkicon">
+            <span class="fa fa-cogs" aria-hidden="true"
+                  title="{% trans "settings"|capfirst %}"
+                  data-toggle="tooltip" data-placement="bottom"></span>
+            <span class="{% filter compact %}
+                            {% include './viewport_visibility_class.html' with breakpoints=label_at|default:"lg" %}
+                         {% endfilter %}"
+                  style="padding-left: 2px">{% trans "settings" %}</span>
+        </a>

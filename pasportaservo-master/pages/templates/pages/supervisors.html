@@ -1,0 +1,203 @@
+{% extends 'core/base.html' %}
+{% load i18n static variable %}
+{% load is_supervisor_of from profile %}
+
+{% block head_title %}{% trans "Supervisors" %}{% endblock %}
+
+{% block extra_js %}
+        <script src="{% static 'js/pep.min.js' %}"></script>
+        <script src="{% static 'js/gestures.js' %}"></script>
+        <script src="{% static 'js/supervisors.js' %}"></script>
+{% endblock %}
+{% block extra_head %}
+        <script>
+            {% if perms.hosting.can_supervise %}
+                $(document).ready(function() {
+                    window.switchActiveTab({% if view.kwargs.in_book is None %}true{% endif %});
+                });
+            {% endif %}
+        </script>
+{% endblock %}
+
+{% block page_class %} page{% endblock %}
+
+{% block page %}
+    <h1>{% trans "Supervisors" %}</h1>
+
+    <div class="well" id="supervisors-wanted" aria-label="{% trans "Call-to-action" %}" touch-action="none" data-nosnippet>
+        {% spaceless %}
+            <button type="button" class="close requires-scripting hidden-print"
+                    title="{% trans "Hide" %}" aria-label="{% trans "Hide call-to-action" %}">
+                <span aria-hidden="true">&times;</span>
+            </button>
+        {% endspaceless %}
+        Ni serĉas Landajn Organizantojn! Se ne estas nomo apud lando, tio signifas, ke la posteno estas vaka
+        kaj ni bezonas vin. <br class="visible-sm-block visible-md-block visible-lg-block" />
+        Se vi volas iĝi LO, bonvole sendu mesaĝon al <a href="mailto:{{ SUPPORT_EMAIL }}" data-nofallback>{{ SUPPORT_EMAIL }}</a>.
+        Dankon!
+    </div>
+
+    <div class="panel-group" role="tablist">
+        <div class="panel panel-info">
+            <div class="panel-heading" id="tasks-header" role="tab"
+                 data-toggle="collapse" data-target="#tasks" aria-controls="tasks" aria-expanded="true">
+                <h4 class="panel-title">
+                    Taskoj de la Landaj Organizantoj
+                    <button type="button" class="btn switch requires-scripting hidden-print pull-right bg-info" aria-hidden="true"></button>
+                </h4>
+            </div>
+            <div class="panel-collapse collapse in" id="tasks" role="tabpanel"
+                 aria-labelledby="tasks-header" aria-live="off">
+                <div class="panel-body panel-body-cosy">
+                    Esti la kontaktulo por homoj de la lando, kiuj volas informiĝi pri PS, precipe tiuj kiuj ne havas
+                    facilan retaliron.
+                </div>
+                <div class="panel-body panel-body-cosy">
+                    Kontakti kaj peri petojn pri aliĝo, ŝanĝo, malaliĝo, k.s. de membroj de PS, ĉefe tiuj kiuj ne havas
+                    facilan retaliron.
+                </div>
+                <div class="panel-body panel-body-cosy">
+                    Kontroli presprovaĵon de la papera adreslibro de PS rilate al landaj skribkutimoj (formo de adresoj,
+                    telefonnumeroj, kaj simile).
+                </div>
+                <div class="panel-body panel-body-cosy">
+                    Helpi informi pri PS per komunikiloj de la landa movado (revuoj, forumoj, dissendolistoj, ktp.) kaj
+                    instigi homojn al uzado kiel gastoj kaj kiel gastigantoj.
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <a name="{% trans "countries-list" context "URL" %}"></a>
+    {% if perms.hosting.can_supervise %}
+        <hr />
+        <div role="navigation">
+            <ul class="nav nav-tabs" role="tablist">
+                <li role="presentation" {% if not view.in_book_query %}class="active"{% endif %}>
+                    <a href="{% url 'supervisors' %}#countries-available"
+                       aria-controls="countries-available" role="tab" data-toggle="tab" aria-expanded="{{ view.in_book_query|yesno:"false,true" }}">
+                        {% trans "All hosts" %}
+                    </a>
+                </li>
+                <li role="presentation" {% if view.in_book_query %}class="active"{% endif %}>
+                    <a href="{% url 'supervisors' in_book=1 %}#countries-in_book"
+                       aria-controls="countries-in_book" role="tab" data-toggle="tab" aria-expanded="{{ view.in_book_query|yesno:"true,false" }}">
+                        {% trans "In the book" %}
+                    </a>
+                </li>
+            </ul>
+        </div>
+        <br />
+    {% endif %}
+
+    <div class="tab-content">
+        {% for country_list_type, country_list in countries.items %}
+        <div id="countries-{{ country_list_type }}" role="table"
+             class="tab-pane table-like-grid countries-list {{ country_list_type }} fade{% if country_list.active %} in active{% endif %}">
+            <div role="row" class="row grid-header">
+                <div role="columnheader" class="col-xxs-8  col-xs-8  col-sm-5  col-lg-4">
+                    <strong>{% trans "code"|capfirst %}</strong>
+                    &nbsp;
+                    <strong>{% trans "country"|capfirst %}</strong>
+                </div>
+                <div role="columnheader" class="col-xxs-4  col-xs-4  col-sm-4  col-lg-5">
+                    <strong>{% trans "status"|capfirst %}</strong>
+                </div>
+                <div role="columnheader" class="col-xxs-12 col-xs-12 col-sm-3  col-lg-3">
+                    <strong>{% trans "supervisors"|capfirst %}</strong>
+                </div>
+            </div>
+            {% for country in country_list.data %}
+            <div class="sr-only" role="separator">~~~~~~~~~~~~~~~~~~~~</div>
+            <div role="row" class="row">
+                <div role="cell" class="col-xxs-12 col-xs-8 col-sm-5 col-lg-4">
+                    <div class="btn btn-sm country-code">
+                        <span><span class="sr-only">{% trans "code" %}</span> {{ country.code }}</span>
+                        <img src="{{ country.flag }}" alt="" style="display: none" aria-hidden="true" />
+                    </div>
+                    {% asvar country_name_class trimmed %}
+                        {% if user|is_supervisor_of:country or not perms.hosting.can_supervise %}
+                            btn-primary
+                        {% else %}
+                            btn-default
+                        {% endif %}
+                    {% endasvar %}
+                    <a class="btn {{ country_name_class }}"
+                       {% if user|is_supervisor_of:country %}
+                         {% if country_list.in_book is None %}
+                            href="{% url 'staff_place_list' country_code=country.code %}"
+                         {% else %}
+                            href="{% url 'staff_place_list' country_code=country.code in_book=country_list.in_book %}"
+                         {% endif %}
+                       {% elif not perms.hosting.can_supervise %}
+                            {% asvar country_name_search_query trimmed %}
+                                {% trans "countrycode" context "URL" %}:{{ country.code }}
+                            {% endasvar %}
+                            href="{% url 'search' query=country_name_search_query %}"
+                       {% else %}
+                            disabled
+                       {% endif %}>
+                        <strong>{{ country.name }}</strong>&nbsp;
+                        <span class="badge" data-nosnippet>{{ country.place_count }}</span>
+                        <span class="sr-only" data-nosnippet>
+                            {% blocktrans count counter=country.place_count %}host{% plural %}hosts{% endblocktrans %}
+                        </span>
+                    </a>
+                </div>
+                <div role="cell" class="col-xxs-12 col-xs-4 col-sm-4 col-lg-5 pull-xs-right pull-sm-left" data-nosnippet>
+                    {% widthratio country.checked_count country.place_count 100 as checked_progress %}
+                        {% blocktrans count counter=country.checked_count trimmed asvar checked_title %}
+                            place checked{% plural %}places checked
+                        {% endblocktrans %}
+                    {% widthratio country.only_confirmed_count country.place_count 100 as confirmed_progress %}
+                        {% blocktrans count counter=country.only_confirmed_count trimmed asvar confirmed_title %}
+                            place confirmed{% plural %}places confirmed
+                        {% endblocktrans %}
+                    {% asvar dimmed trimmed %}
+                        {% if perms.hosting.can_supervise and not user|is_supervisor_of:country %}
+                            opacity: 0.70
+                        {% endif %}
+                    {% endasvar %}
+                    <small style="{{ dimmed }}"><b>{{ checked_progress }}%</b></small>
+                    <div class="progress">
+                        <div class="progress-bar progress-bar-success"
+                             data-progress="{{ checked_progress }}"
+                             style="width: {{ checked_progress }}%; {{ dimmed }}"
+                             data-toggle="tooltip"
+                             title="{{ country.checked_count }} {{ checked_title }}">
+                            <b>{{ country.checked_count }}</b>
+                            <span class="sr-only also-visible-print">{{ checked_title }}</span>
+                        </div>
+                        <div class="progress-bar progress-bar-info progress-bar-striped"
+                             data-progress="{{ confirmed_progress }}"
+                             style="width: {{ confirmed_progress }}%; {{ dimmed }}"
+                             data-toggle="tooltip"
+                             title="{{ country.only_confirmed_count }} {{ confirmed_title }}">
+                            {{ country.only_confirmed_count }}
+                            <span class="sr-only">{{ confirmed_title }}</span>
+                        </div>
+                    </div>
+                </div>
+                <div role="cell" class="col-xxs-12 col-xs-8 col-sm-3 col-lg-3 person-full-name">
+                    {% if country.supervisors %}
+                        <div class="sr-only">{% trans "supervisors" %}:</div>
+                    {% endif %}
+                    {% for supervisor in country.supervisors %}
+                        {% spaceless %}
+                        <a href="{{ supervisor.get_absolute_url }}">
+                            {% if user.is_authenticated %}
+                                {{ supervisor.get_fullname_always_display }}
+                            {% else %}
+                                <span>{{ supervisor.name|default:supervisor.INCOGNITO }}</span>
+                            {% endif %}
+                        </a>&nbsp;{% if not forloop.last %},{% endif %}
+                        {% endspaceless %}
+                    {% endfor %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% endfor %}
+    </div>
+{% endblock page %}

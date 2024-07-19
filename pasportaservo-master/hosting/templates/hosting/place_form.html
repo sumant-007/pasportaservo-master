@@ -1,0 +1,83 @@
+{% extends 'hosting/model_form.html' %}
+{% load i18n static variable %}
+
+{% block head_title %}
+    {% if view.role >= roles.SUPERVISOR and place %}
+        {# THIS IS A PLACE EDIT FORM, AND USER IS A SUPERVISOR OR ADMIN #}
+        {% blocktrans %}Update {{ kin }}place{% endblocktrans %}:
+        {{ place.owner.name|default:place.owner.INCOGNITO }}, {{ place.get_locality_display }}
+    {% elif place %}
+        {# THIS IS A PLACE EDIT FORM, AND USER IS THE OWNER #}
+        {% blocktrans with kin=_("my ") %}Update {{ kin }}place{% endblocktrans %}
+        ({{ place }})
+    {% elif view.role >= roles.SUPERVISOR %}
+        {# THIS IS A PLACE CREATE FORM, AND USER IS A SUPERVISOR OR ADMIN #}
+        {% blocktrans with name=view.create_for.name|default:_("user") %}Place of {{ name }}{% endblocktrans %}
+        {% if not view.create_for.name %}#{{ view.create_for.id }}{% endif %}
+    {% else %}
+        {# THIS IS A PLACE CREATE FORM, AND USER IS THE OWNER #}
+        {% trans "place"|title %}
+    {% endif %}
+{% endblock %}
+
+{% block safe_page_title %}
+    {% if True %}
+            return document.title.replace('{{ place|stringformat:"s"|escapejs }}', 'XXXXXXXX')
+                                 .replace('{{ place.get_locality_display|escapejs }}', 'XXXXXX (XXXXXX)');
+    {% endif %}
+{% endblock %}
+
+{% block extra_css %}
+        {{ block.super }}
+        <link rel="stylesheet" href="{% static 'chosen/chosen.min.css' %}">
+        <style type="text/css">
+            .base-form .chosen-single span {
+                margin-left: 18px;
+            }
+        </style>
+{% endblock %}
+{% block extra_js %}
+        {{ block.super }}
+        <script src="{% static 'chosen/chosen.jquery.min.js' %}" type="text/javascript"></script>
+        {% if form.location %}
+            <script src="{% static 'js/place-location.js' %}" type="text/javascript"></script>
+        {% endif %}
+{% endblock %}
+
+
+{% block page %}
+    {% asvar admin_submit_condition %}{% if view.role == roles.ADMIN and not form.location %}True{% endif %}{% endasvar %}
+    {% asvar extra_submit_condition %}{% if not form.location %}True{% endif %}{% endasvar %}
+    {{ block.super }}
+{% endblock %}
+
+{% block form_container_class %}col-xs-12 col-md-offset-2 col-md-8{% endblock %}
+
+{% block fields_after %}
+    {% if admin_submit_condition or extra_submit_condition %}
+        <br class="hidden-xxs" />
+        <hr class="visible-xxs-block" />
+    {% endif %}
+{% endblock %}
+
+{% block form_submit_class %}{% if admin_submit_condition or extra_submit_condition %} fullwidth-xxs{% endif %}{% endblock %}
+
+{% block form_submit_extra_button_name %}_gotomap{% endblock %}
+{% block form_submit_extra_button %}
+        <span class="fa fa-location-dot" aria-hidden="true"></span>
+        {% trans "Confirm and edit location" %}
+{% endblock %}
+
+{% block form_after %}
+    <script type="text/javascript">
+        $('#id_conditions, #id_country, select#id_state_province').each(function() {
+            $(this).chosen(
+                {
+                    no_results_text: "{% trans "Nothing found for" %}",
+                    disable_search_threshold: this.getAttribute('data-search-threshold'),
+                    hide_results_on_select: false,  // only applies to multiple select.
+                }
+            );
+        });
+    </script>
+{% endblock form_after %}

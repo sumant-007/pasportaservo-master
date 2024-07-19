@@ -1,0 +1,50 @@
+/* Bootstrap Callout */
+
+.callout {
+    padding: 20px;
+    margin: 20px 0;
+    border: 1px solid $color-gray-light;
+    border-left-width: 5px;
+    border-radius: 3px;
+
+    h4 {
+        margin-top: 0;
+        margin-bottom: 5px;
+    }
+
+    p:last-child {
+        margin-bottom: 0;
+    }
+
+    code {
+        border-radius: 3px;
+    }
+
+    + .callout {
+        margin-top: -5px;
+    }
+    &-default {
+        border-left-color: $color-gray;
+        h4 { color: $color-gray; }
+    }
+    &-primary {
+        border-left-color: $color-primary;
+        h4 { color: $color-primary; }
+    }
+    &-danger {
+        border-left-color: $color-danger;
+        h4 { color: $color-danger; }
+    }
+    &-warning {
+        border-left-color: $color-warning;
+        h4 { color: $color-warning; }
+    }
+    &-info {
+        border-left-color: $color-info;
+        h4 { color: $color-info; }
+    }
+    &-success {
+        border-left-color: $color-success;
+        h4 { color: $color-success; }
+    }
+}

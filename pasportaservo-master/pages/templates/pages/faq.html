@@ -1,0 +1,363 @@
+{% extends 'core/base.html' %}
+{% load i18n variable %}
+
+{% block head_title %}Oftaj demandoj{% endblock %}
+
+{% block page_class %} page{% endblock %}
+{% block page_microdata %}itemscope itemtype="https://schema.org/FAQPage"{% endblock %}
+
+{% block page %}
+    <h1>Oftaj Demandoj</h1>
+
+    <section aria-labelledby="faq-registration">
+        <h3 id="faq-registration" name="pri-registrigho">Pri kaj post la registriĝo.</h3>
+        <dl class="list-group">
+            {% asvar Question %}Mi forgesis mian pasvorton! Kion mi faru?{% endasvar %}
+            {% asvar Answer %}
+                <ul>
+                    <li>
+                        {% url 'password_reset' as pwd_reset_url %}
+                        Petu novan per via retpoŝta adreso ĉi tie:
+                        <a href="{{ pwd_reset_url }}">pasportaservo.org<wbr>{{ pwd_reset_url }}</a>.
+                    </li>
+                    <li>Entajpu vian retpoŝtadreson kaj klaku “Sendi”, vi ricevos retleteron kun ligilo.</li>
+                    <li>Klaku la ligilon kaj vi povos registri vian novan pasvorton.</li>
+                </ul>
+            {% endasvar %}
+            {% include './snippets/faq_item.html' with Question=Question Answer=Answer only %}
+
+            {% asvar Question %}Mi forgesis mian salutnomon! Kion mi faru?{% endasvar %}
+            {% asvar Answer %}
+                <ul>
+                    <li>
+                        {% url 'username_remind' as usr_remind_url %}
+                        Petu memorigon de la salutnomo per via retpoŝta adreso ĉi tie:
+                        <a href="{{ usr_remind_url }}">pasportaservo.org<wbr>{{ usr_remind_url }}</a>.
+                    </li>
+                    <li>Entajpu vian retpoŝtadreson kaj klaku “Sendi”, vi ricevos retleteron kun via salutnomo.</li>
+                </ul>
+            {% endasvar %}
+            {% include './snippets/faq_item.html' with Question=Question Answer=Answer only %}
+
+            {% asvar Question %}Kial vi opinias ke krimuloj scias la pasvorton kiun mi volus uzi?{% endasvar %}
+            {% asvar Answer %}
+                Tia mesaĝo povas aperi kiam vi registriĝas aŭ ŝanĝas vian pasvorton. Ni uzas servon
+                ({% include './_xa.html' with URL="https://haveibeenpwned.com/Passwords" T="Pwned Passwords" %}
+                de Troy Hunt) kiu kontrolas en tute anonima maniero ene de publika datumbazo ĉu la pasvorto
+                estis iam malkovrigita dum iu sekureca rompo ie ajn en la interreto.
+                Tio <em>ne signifas</em> ke via propra konto estis trapenetrita, sed ke vi elektis iom
+                komun-uzan pasvorton.
+                <ul>
+                    <li>
+                        Ekzemple, vi ŝatus uzi la vorton “Esperanto” kiel pasvorton; tamen iu alia jam uzis
+                        ĝin ĉe alia (nesufiĉe sekurigita) servo kiu estis trarompita. Tia literkombino nun
+                        estas konata al krimuloj kaj estas do registrita en la menciita datumbazo.
+                    </li>
+                </ul>
+                Agordante tian komun-uzan pasvorton por via propra konto ĉe Pasporta Servo igas la konton
+                malpli protektita.
+            {% endasvar %}
+            {% include './snippets/faq_item.html' with Question=Question Answer=Answer only %}
+
+            {% asvar Question %}Kiel elekti bonan pasvorton?{% endasvar %}
+            {% asvar Answer %}
+                Bona pasvorto estas (sufiĉe longa) ĉeno de literoj, ciferoj, kaj simboloj kiun vi mem povas
+                bone memori sed aliaj malfacile diveni. Kiel pasvorton, provu uzi iun frazon kaj ne unuopan
+                vorton, ekzemple:
+                <ul>
+                    <li>Verson el kanto aŭ poemo</li>
+                    <li>Citaĵon el filmo aŭ parolado</li>
+                    <li>Memorindan frazon el de vi ŝatata libro</li>
+                </ul>
+                Uzu almenaŭ 8 karaktrojn (ju pli longa la pasvorto des pli sekurigita estos via konto), kaj
+                evitu uzi informojn kiujn aliaj scias pri vi aŭ povas facile eltrovi (ekzemple, per via
+                socireta profilo). Ne uzu sole:
+                <ul>
+                    <li>vian kromnomon</li>
+                    <li>nomon de via infano aŭ dorlotbesto</li>
+                    <li>naskiĝdaton aŭ -jaron vian aŭ de via partnero / infano</li>
+                    <li>vian stratnomon aŭ adreson</li>
+                    <li>vian hobion aŭ nomon de ŝatata ripozejo, ekzemple ‘esperanto’ aŭ ‘gufujo’</li>
+                    <li>oftajn / simplajn vortojn, ekzemple la memevidentajn ‘pasvorto’, ‘abcdef’, ‘1234’</li>
+                    <li>kombinojn sur klavaro kiel ‘zxcvbnm’, ‘3edc4rfv5tgb’</li>
+                </ul>
+                Estas rekomendinda la uzo de pasvort-administrilo kun bona reputacio, kiel
+                {% include './_xa.html' with URL="https://1password.com/sign-up/" T="1Password" %} (2.99$ monate)
+                aŭ {% include './_xa.html' with URL="https://www.lastpass.com/pricing" T="LastPass" %} (baza
+                versio senpaga), por konservi longajn kaj sekurajn pasvortojn sen la neceso enparkerigi ilin.
+            {% endasvar %}
+            {% include './snippets/faq_item.html' with Question=Question Answer=Answer only %}
+
+            {% asvar Question %}Mia retadreso ne plu aktualas / mi volas ŝanĝi mian registritan retadreson. Kion mi faru?{% endasvar %}
+            {% asvar Answer %}
+                <ul>
+                    <li>
+                        {% url 'email_update' as email_update_url %}
+                        Provizu vian novan retpoŝtan adreson ĉi tie:
+                        <a href="{{ email_update_url }}">pasportaservo.org<wbr>{{ email_update_url }}</a>.
+                    </li>
+                    <li>
+                        Atentu ke vi devas klaki la ligilon en konfirma retletero kiun ni sendos al la nova adreso,
+                        antaŭ ol via retadreso ŝanĝiĝos en la retejo.
+                    </li>
+                    <li>
+                        Dum ankoraŭ vi ne klakis tiun ligilon, la retejo daŭre uzos la malnovan retadreson.
+                    </li>
+                    <li>
+                        Se vi ne ricevas la konfirman retleteron,
+                        <a href="mailto:{{ SUPPORT_EMAIL }}">skribu al ni</a>.
+                    </li>
+                </ul>
+            {% endasvar %}
+            {% include './snippets/faq_item.html' with Question=Question Answer=Answer only %}
+
+            {% asvar Question %}Kie estas la mapo de gastigantoj?{% endasvar %}
+            {% asvar Answer %}
+                {% url 'world_map' as world_map_url %}
+                La mapo estas esplorebla ĉi tie: <a href="{{ world_map_url }}">pasportaservo.org<wbr>{{ world_map_url }}</a>.
+                Ĉiun fojon kiam vi serĉas gastigantojn, vi vidos ankaŭ ligilon al la mapo de la petata regiono.
+            {% endasvar %}
+            {% include './snippets/faq_item.html' with Question=Question Answer=Answer only %}
+        </dl>
+    </section>
+
+    <hr />
+
+    <section aria-labelledby="faq-reasons">
+        <h3 id="faq-reasons" name="kial-gastiganto">Kial mi fariĝu gastiganto?</h3>
+        <dl class="list-group">
+            {% asvar Question %}Sed mi jam gastigas eĉ sen esti en la Pasporta Servo!{% endasvar %}
+            {% asvar Answer %}
+                Se vi oficiale aperas en Pasporta Servo, ankaŭ novuloj kaj homoj el aliaj anguloj de la planedo
+                povas vin trovi.
+            {% endasvar %}
+            {% include './snippets/faq_item.html' with Question=Question Answer=Answer only %}
+
+            {% asvar Question %}Sed venos tro da gastoj, se mi estos en la gastiganto-listo!{% endasvar %}
+            {% asvar Answer %}
+                Vi ĉiam rajtas rifuzi tranokto-peton sen klarigi kial.
+            {% endasvar %}
+            {% include './snippets/faq_item.html' with Question=Question Answer=Answer only %}
+
+            {% asvar Question %}Sed mi ne povas gastigi la tutan jaron, mi ne ofte estas hejme.{% endasvar %}
+            {% asvar Answer %}
+                La gastoj ĉiam devas anonci sin antaŭ ol veni al vi, do vi vidos, ĉu vi tiam estos hejme aŭ ne.
+            {% endasvar %}
+            {% asvar AnswerAlt %}
+                Vi krome povas indiki ĉe via loĝejo periodon kiam vi ne havas eblecon gastigi, se vi anticipe konas la datojn.
+                <br />
+                En via <a href="{% url 'profile_redirect' %}">profilo</a> estas la “Loĝejo”-parto de la paĝo.
+                Klaku sur la butono dekstre
+                <span class="btn btn-primary btn-sm disabled">
+                    <span class="fa fa-arrow-right" aria-hidden="true"></span> Rigardi
+                </span>.
+                Aperos la paĝo de via loĝejo, tie klaku sur la butono
+                <span class="btn btn-default btn-sm disabled">
+                    <span class="sr-only">Maldisponebla?</span>
+                    <span class="fa fa-regular fa-clock" aria-hidden="true"></span>
+                </span>.
+                Elektu la datojn kiam via maldisponebleco komenciĝas kaj/aŭ finiĝas.
+            {% endasvar %}
+            {% include './snippets/faq_item.html' with Question=Question Answer=Answer Answer_Alt1=AnswerAlt only %}
+
+            {% asvar Question %}Sed mi ne emas pagi por esti gastiganto.{% endasvar %}
+            {% asvar Answer %}
+                Registriĝo kiel gastiganto en Pasporta Servo estas libervola kaj senpaga.
+                Ni petos neniun monon de vi, kaj ĝojos vidi vin inter tiuj markitaj oranĝkolore en la serĉrezultoj.
+            {% endasvar %}
+            {% include './snippets/faq_item.html' with Question=Question Answer=Answer only %}
+
+            {% asvar Question %}Eĉ se mi havas dormlokon, mi ne havas tempon aŭ emon prizorgi gasto(j)n.{% endasvar %}
+            {% asvar Answer %}
+                La gastoj devas esti memstaraj. La ideo de Pasporta Servo estas, ke oni helpas pri la tranoktado,
+                ĉiu aldona bonkoreco&thinsp;/&thinsp;servo&thinsp;/&thinsp;ĉiĉeronado dependas de la gastiganto.
+                Se vi ne havas tempon/emon, do vi ne havas. Neniu devigas vin tion fari.
+            {% endasvar %}
+            {% include './snippets/faq_item.html' with Question=Question Answer=Answer only %}
+
+            {% asvar Question %}Sed mi ne havas apartan gastoĉambron aŭ liton. Mi nur povas plankon proponi.{% endasvar %}
+            {% asvar Answer %}
+                Ankaŭ tute bone! Indiku ekzakte kiajn kondiĉojn vi havas, kaj la gastoj devos akcepti tion.
+            {% endasvar %}
+            {% include './snippets/faq_item.html' with Question=Question Answer=Answer only %}
+
+            {% asvar Question %}Sed mi loĝas en tiom fora loko, ke neniu venus al mia urbo!{% endasvar %}
+            {% asvar Answer %}
+                Invitu la gastojn al vi! Uzu frapan rimarkon apud via adreso kial indas viziti vin kaj la ĉirkaŭaĵon.
+            {% endasvar %}
+            {% asvar AnswerAlt %}
+                Proponu aktivecon! Skribu bonvenan teksteton.
+                Kontaktu aliajn gastigantojn en via regiono por povi proponi plurajn lokojn proksime.
+            {% endasvar %}
+            {% include './snippets/faq_item.html' with Question=Question Answer=Answer Answer_Alt1=AnswerAlt only %}
+
+            {% asvar Question %}Sed mi ne volas aranĝi invitleteron por gastoj!{% endasvar %}
+            {% asvar Answer %}
+                Tion vi tute ne devas fari. Ajnajn formalaĵojn rilatajn al vizoj aŭ restadpermesoj k.s.,
+                la gastoj devas prizorgi per propraj rimedoj. Se iu petas vin, simple rifuzu.
+            {% endasvar %}
+            {% include './snippets/faq_item.html' with Question=Question Answer=Answer only %}
+        </dl>
+    </section>
+
+    <hr />
+
+    <section aria-labelledby="faq-being-guest">
+        <h3 id="faq-being-guest" name="pri-gastoj">Se vi estas gasto&hellip;</h3>
+        <dl class="list-group">
+            {% asvar Question %}Ĉu estas limo pri kiom da adresoj aŭ tranoktebloj mi rajtas uzi?{% endasvar %}
+            {% asvar Answer %}
+                Ne, ne ekzistas limo. Ĉiam dependas de la unuopaj gastigantoj, ĉu ili povas vin gastigi aŭ ne.
+            {% endasvar %}
+            {% include './snippets/faq_item.html' with Question=Question Answer=Answer only %}
+
+            {% asvar Question %}Ĉu mi vere, ĉiam devas antaŭe kontakti la gastigantojn?{% endasvar %}
+            {% asvar Answer %}
+                Kelkaj gastigantoj pretas akcepti gastojn sen antaŭa anonco, sed nur por malmultaj tio estas
+                tute akceptebla.
+                <br />
+                En la paĝo de loĝloko (kaj en la libreto, apud la adreso) vi ĉiam vidas la kondiĉojn indikitajn
+                de la gastiganto.
+                Se oni petas interkonsenton kontakti pli frue telefone, do faru tion; se retletere, tion.
+                <br />
+                Bonvolu ĉiam respekti la petitajn limigojn de la gastiganto.
+            {% endasvar %}
+            {% include './snippets/faq_item.html' with Question=Question Answer=Answer only %}
+
+            {% asvar Question %}Kiom da tempo mi rajtas resti ĉe la gastiganto?{% endasvar %}
+            {% asvar Answer %}
+                Same kiel pri kontaktado, ankaŭ la resto-daŭro estas indikita.
+                Kelkaj akceptas nur por unu nokto; okazas, ke tute ne gravas por la gastiganto kiom longe vi
+                restas. Vi antaŭanoncu kiom da noktoj vi deziras resti, kaj nepre interkonsentu.
+            {% endasvar %}
+            {% include './snippets/faq_item.html' with Question=Question Answer=Answer only %}
+
+            {% asvar Question %}Kion mi faru se gastiganto rifuzas mian tranokto-peton?{% endasvar %}
+            {% asvar Answer %}
+                Tio foje okazas. Oni ne ĉiam havas tempon kaj la kondiĉojn gastigi. Serĉu alian gastiganton.
+            {% endasvar %}
+            {% include './snippets/faq_item.html' with Question=Question Answer=Answer only %}
+
+            {% asvar Question %}Ĉu mia gastiganto ankaŭ donos al mi manĝaĵon?{% endasvar %}
+            {% asvar Answer %}
+                Denove, tio estas laŭ interkonsento.
+                La gastiganto rajtas peti repagon por la manĝado, sed la gastiganto tute ne devas proponi manĝojn.
+                Vi, kiel gasto, povas proponi kuiri aŭ prepari kune!
+            {% endasvar %}
+            {% include './snippets/faq_item.html' with Question=Question Answer=Answer only %}
+
+            {% asvar Question %}Ĉu mia gastiganto helpos min akiri vizon aŭ restadpermeson?{% endasvar %}
+            {% asvar Answer %}
+                Ne. La ideo de Pasporta Servo estas, ke oni helpas pri la tranoktado, en neformala maniero.
+                Gastigantoj ne povas (kaj foje eĉ ne rajtas) respondeci pri vi antaŭ la instancoj de sia
+                lando. Ĉiujn oficialajn paperojn necesajn por laŭleĝa restado en la lando, vi devas aranĝi
+                formale, mem.
+            {% endasvar %}
+            {% include './snippets/faq_item.html' with Question=Question Answer=Answer only %}
+
+            {% asvar Question %}Ĉu mi mem devas gastigi por povi gasti ĉe aliaj?{% endasvar %}
+            {% asvar Answer %}
+                Ne, esti gastiganto mem ne estas antaŭkondiĉo (paroli Esperanton – jes :)
+            {% endasvar %}
+            {% asvar AnswerAlt %}
+                Se vi iam ekhavos la kondiĉojn por proponi ankaŭ al aliaj tranokteblon,
+                ni ĝojos vidi vin inter la gastigantaro de Pasporta Servo!
+            {% endasvar %}
+            {% include './snippets/faq_item.html' with Question=Question Answer=Answer Answer_Alt1=AnswerAlt only %}
+
+            {% asvar Question %}Kiom mi devas pagi por ĝui la gastigan servon?{% endasvar %}
+            {% asvar Answer %}
+                Neniom. Pro uzado de Pasporta Servo (kun la celo esplori gastigeblojn, gasti, aŭ gastigi),
+                ni petos de vi neniun monon; tio estas tute senpaga. Se vi emas subteni la projekton, ni
+                kompreneble tre ĝojos! (Vi povas fari ĝiron al TEJO indikante kiel celon “subteno por PS”.)
+                <br />
+                Atentu, tamen, ke iuj gastigantoj povas peti partoprenon en elspezoj rilataj al via ĉeesto;
+                ekzemple, repagon de manĝaĵo-kostoj. Nepre interkonsentu kun la gastiganto antaŭ via alveno.
+            {% endasvar %}
+            {% include './snippets/faq_item.html' with Question=Question Answer=Answer only %}
+        </dl>
+    </section>
+
+    <hr />
+
+    <section aria-labelledby="faq-printed-edition">
+        <h3 id="faq-printed-edition" name="libreto">Pasporta Servo &ndash; libra versio.</h3>
+        <dl class="list-group">
+            {% asvar Question %}Kiel mi sciu, ke mi aperos en la libro?{% endasvar %}
+            {% asvar Answer %}
+                En la paĝo de via loĝejo, sube, “printi en la PS-libreto”: devas esti <strong>jes</strong>.
+                <br />
+                Krome, se vi estis ĝis nun en la libreto, kaj vi denove volas aperi en ĝi,
+                vi konfirmu per la retletero, kiun ni sendos al vi.
+            {% endasvar %}
+            {% include './snippets/faq_item.html' with Question=Question Answer=Answer only %}
+
+            {% asvar Question %}Kial la retejo postulas de mi indiki mian genron?{% endasvar %}
+            {% asvar Answer %}
+                La PS-libreto, malsame al ĝia retejo, estas senŝanĝa kaj ne ebligas interagon kun la
+                gastiganto antaŭ ol peti pri tranokto. Tial ĝi dekomence prezentas certajn informojn
+                pri gastigantoj, kiuj povus esti gravaj por la gastoj.
+                <br />
+                Iuj preferas gasti nur ĉe personoj de specifa genro; ekzemple, pro religiaj aŭ personecaj
+                kialoj. Ĉar tiu ĉi kondiĉo estas atentinda, gastigantoj estas petataj indiki la informon.
+                La retejo proponas kelkajn (plej oftajn) variantojn sed elekti el inter ili ne estas devige;
+                oni ĉiam povas tajpi sian propran preferon por sia genra identeco.
+            {% endasvar %}
+            {% include './snippets/faq_item.html' with Question=Question Answer=Answer only %}
+
+            {% asvar Question %}Kial Pasporta Servo uzas la nocion <i>genro</i> anstataŭ <i>sekso</i>?{% endasvar %}
+            {% asvar Answer %}
+                Genro ne estas la sama kiel biologia sekso, kaj pli intime rilatas al onia identeco;
+                kiamaniere oni sindifinas. Kvankam multaj homoj havas genran identecon konkordan kun
+                iliaj fizikaj seksaj markoj, pluraj aliaj tian kongruon ne sekvas (tuttempe aŭ parttempe,
+                kiel ekzemple homoj kun ne-fiksa aŭ ambigua genro).
+                Por lerni pli pri la temo,
+                {% include './_xa.html' with URL="https://eo.wikipedia.org/wiki/Socia_sekso" T="legu en Vikipedio" %}.
+            {% endasvar %}
+            {% include './snippets/faq_item.html' with Question=Question Answer=Answer only %}
+
+            {% asvar Question %}Mi ne plu volas aperi en la libro. Kion mi faru?{% endasvar %}
+            {% asvar Answer %}
+                En via <a href="{% url 'profile_redirect' %}">profilo</a> estas la “Loĝejo”-parto de la paĝo.
+                Klaku sur la butono dekstre
+                <span class="btn btn-primary btn-sm disabled">
+                    <span class="fa fa-arrow-right" aria-hidden="true"></span> Rigardi
+                </span>.
+                Aperos la paĝo de via loĝejo, tie klaku sur la butono
+                <span class="btn btn-success btn-sm disabled">
+                    <span class="fa fa-edit" aria-hidden="true"></span> Redakti
+                </span>.
+                <br />
+                En la redakta formularo iru tute malsupren kaj vidu ĉu estas markilo
+                <span class="fa fa-check" aria-label="&#x2713;"></span>
+                apud “Printu en la PS-libreto”, se jes, forigu ĝin kaj konservu.
+            {% endasvar %}
+            {% asvar AnswerAlt %}
+                Se vi ne scias kiel ŝanĝi vian profilon, <a href="mailto:{{ SUPPORT_EMAIL }}">skribu al ni</a>.
+            {% endasvar %}
+            {% include './snippets/faq_item.html' with Question=Question Answer=Answer Answer_Alt1=AnswerAlt only %}
+
+            {% asvar Question %}Mi ankoraŭ neniam estis en la libro, sed nun volas aperi en ĝi. Kion mi faru?{% endasvar %}
+            {% asvar Answer %}
+                En la paĝo de via loĝejo, sube, kontrolu kio aperas ĉe “printi en la PS-libreto”.
+                Se <strong>jes</strong>, vi aperos en la libreto! Se ne:
+                <br />
+                Klaku sur la butono
+                <span class="btn btn-success btn-sm disabled">
+                    <span class="fa fa-edit" aria-hidden="true"></span> Redakti
+                </span> tie.
+                En la redakta formularo iru tute malsupren kaj certiĝu ke estas markilo
+                <span class="fa fa-check" aria-label="&#x2713;"></span>
+                apud “Printu en la PS-libreto”, konservu.
+                Ankaŭ certiĝu ke en la
+                <a href="{% url 'profile_settings_shortcut' %}#{% trans "privacy" context "URL" %}">privatecaj agordoj</a>
+                la loĝejo estas markita ke ĝi estu videbla en la libreto.
+                <br />
+                Se vi ankoraŭ ne havas profilon en la retejo, <a href="{% url 'profile_create' %}">kreu ĝin</a>,
+                kaj poste nepre elektu esti printita en la libreto.
+            {% endasvar %}
+            {% include './snippets/faq_item.html' with Question=Question Answer=Answer only %}
+        </dl>
+    </section>
+
+{% endblock page %}

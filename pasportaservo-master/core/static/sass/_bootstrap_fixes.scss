@@ -1,0 +1,235 @@
+
+.alert.alert-small {
+    padding: 6px 12px;
+    font-size: 14px;
+}
+
+a:not([href]) {
+    outline: 0;
+}
+.tooltip-inner a {
+    color: #ddd;
+    text-decoration: underline #fff dotted;
+}
+
+.glyphicon {
+    top: 2px;
+}
+.glyphicon-stack-normal,
+.glyphicon-stack-large {
+    position: relative;
+    display: inline-block;
+    vertical-align: middle;
+}
+.glyphicon-stack-normal {
+    width: 1em;
+    height: 1em;
+    line-height: 1em;
+}
+.glyphicon-stack-large {
+    width: 2em;
+    height: 2em;
+    line-height: 2em;
+}
+.glyphicon-stackbit-1x,
+.glyphicon-stackbit-2x {
+    position: absolute;
+    left: 0;
+    width: 100%;
+    text-align: center;
+}
+.glyphicon-stackbit-1x {
+    line-height: inherit;
+}
+.glyphicon-stackbit-2x {
+    font-size: 1.5em;
+}
+.fa-0_5x {
+    font-size: 0.5em;
+}
+.fa-stack.fa-0_5x {
+    .fa {
+        vertical-align: middle;
+        font-size: 1.5em;
+
+        &.fa-pull-up {
+            top: -0.4em;
+        }
+        &.fa-pull-down {
+            top: +0.4em;
+        }
+    }
+}
+.help-block .fa {
+    position: relative;
+    top: 0.15ex;
+}
+@each $direction in left,right {
+    $base-space: 0.25em;
+    .fa-spacer-#{$direction} {
+        margin-#{$direction}: $base-space;
+    }
+    @for $i from 2 through 2 {
+        .fa-spacer-#{$direction}-#{$i}x {
+            margin-#{$direction}: $base-space * $i;
+        }
+    }
+}
+
+/* Bootstrap hack for tooltip */
+.btn.disabled { pointer-events: auto; }
+
+.radio-inline {
+    margin-right: 10px;
+}
+.radio-inline + .radio-inline {
+    margin-left: 0;
+}
+
+.table-like-grid > .row {
+    margin-left: auto;
+    margin-right: auto;
+
+    & > [class^="col-"] {
+        padding-left: 5px;
+    }
+    &:nth-child(odd) {
+        background-color: lighten($color-default-bg, 1%);
+    }
+    &:nth-child(even) {
+        background-color: lighten($color-default-bg, 3%);
+    }
+    &.grid-header {
+        background-color: inherit;
+        padding-bottom: 3px;
+        border-bottom: solid 2px lighten($color-gray, 40%);
+    }
+    &:not(.grid-header) {
+        border-bottom: solid 1px lighten($color-gray, 47.5%);
+    }
+    &:last-child:not(.grid-header) {
+        border-bottom: solid 2px lighten($color-gray, 40%);
+    }
+}
+
+blockquote .table.small:before {
+    content: "";
+}
+
+.panel-cosy .panel-heading, .panel-heading-cosy {
+    padding: 5px 15px;
+}
+.panel-cosy .panel-body, .panel-body-cosy {
+    padding: 10px 15px;
+}
+.panel-compact .panel-heading, .panel-heading-compact {
+    padding: 3px 15px;
+}
+.panel-compact .panel-body, .panel-body-compact {
+    padding: 5px 15px;
+}
+
+@mixin compact-grid-columns {
+    $container: ".row.compact";
+    $classes: xxs xs sm md lg;
+    $columns-except-first: null;
+    $columns-except-last:  null;
+    @each $class in $classes {
+        @for $i from 1 through $BOOTSTRAP-COLUMNS {
+            $columns-except-first: $columns-except-first, unquote("#{$container} .col-#{$class}-#{$i}:not(:first-child)");
+            $columns-except-last:  $columns-except-last,  unquote("#{$container} .col-#{$class}-#{$i}:not(:last-child)");
+        }
+    }
+    #{$columns-except-first} {
+        padding-left: 5px;
+    }
+    #{$columns-except-last} {
+        padding-right: 5px;
+    }
+}
+@include compact-grid-columns;
+
+.visible-xxs-block,
+.visible-xxs-inline,
+.visible-xxs-inline-block {
+    display: none !important;
+}
+
+@mixin flexbox {
+    display: -webkit-box;
+    display: -webkit-flex;
+    display: -ms-flexbox;
+    display: flex;
+}
+@mixin flex-row {
+    @include flexbox;
+        -webkit-box-orient: horizontal;
+     -webkit-box-direction: normal;
+    -webkit-flex-direction: row;
+        -ms-flex-direction: row;
+            flex-direction: row;
+}
+@mixin flex-column {
+    @include flexbox;
+      -webkit-box-align: center;
+    -webkit-align-items: center;
+         -ms-flex-align: center;
+            align-items: center;
+}
+.row.vertical-align {
+    @include flex-row;
+    & > [class^="col-"],
+    & > [class*=" col-"] {
+        @include flex-column;
+    }
+}
+
+/* !XXS */
+@media (min-width: #{$BOOTSTRAP-XS}) {
+    .row.vertical-align-not-xxs {
+        @include flex-row;
+        & > [class^="col-"],
+        & > [class*=" col-"] {
+            @include flex-column;
+        }
+    }
+    .pull-xs-left {
+        float: left !important;
+    }
+    .pull-xs-right {
+        float: right !important;
+    }
+}
+/* SM */
+@media (min-width: #{$BOOTSTRAP-SM}) {
+    .pull-sm-left {
+        float: left !important;
+    }
+    .pull-sm-right {
+        float: right !important;
+    }
+    .form-horizontal .form-group-sm {
+        .checkbox, .checkbox-inline {
+            padding-top: 6px;
+            font-size: 12px;
+            input[type="checkbox"] {
+                margin-top: 1px;
+            }
+        }
+        .input-group-addon {
+            font-size: 12px;
+        }
+    }
+}
+/* MD */
+@media (min-width: #{$BOOTSTRAP-MD}) {
+    .fixed-md-6 {
+        width: 470px;
+    }
+}
+/* LG+ */
+@media (min-width: #{$BOOTSTRAP-LG}) {
+    .fixed-md-6 {
+        width: 570px;
+    }
+}

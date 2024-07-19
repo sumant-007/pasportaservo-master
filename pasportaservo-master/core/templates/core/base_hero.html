@@ -1,0 +1,101 @@
+{% extends 'core/base.html' %}
+{% load i18n sass_tags %}
+{% load next from utils %}
+
+{% block extra_css %}
+        <link rel="stylesheet" href="{% sass_src 'css/pasportaservo-home.scss' %}">
+{% endblock %}
+
+{% block header_class %} hero{% endblock %}
+
+{% block header %}
+    <nav class="navigator hidden-print" aria-flowto="title">
+        {% block nav-skip %}
+            <div class="navskip" data-nosnippet>
+                <a href="#{% block content-at %}{% trans "content-start" context "URL" %}{% endblock %}"
+                   class="sr-only sr-only-focusable">
+                    {% block nav-skip-label %}{% trans "Skip navigation buttons" %}{% endblock %}
+                </a>
+            </div>
+        {% endblock %}
+        <div class="pull-left" data-nosnippet>
+            {% if user.is_authenticated %}
+                <div class="nav-inbox">
+                    {% include './snippets/header_icon_inbox.html' with label_at='sm,md,lg' %}
+                </div>
+                {% if user.is_staff and user.is_superuser %}
+                    <div class="nav-admin">
+                        <a href="{% url 'admin:index' %}" target="ps_admin" class="linkicon">
+                            <span class="fa fa-table-list" aria-hidden="true"
+                                  title="{% trans "admin site"|capfirst %}"
+                                  data-toggle="tooltip" data-placement="bottom"></span>
+                            <span class="hidden-xxs hidden-xs" style="padding-left: 4px">{% trans "admin site" %}</span>
+                        </a>
+                    </div>
+                {% endif %}
+                <div class="nav-session">
+                    {% include './snippets/header_icon_logout.html' with label_at='sm,md,lg' %}
+                </div>
+            {% elif user %} {# 500/403-CSRF error pages don't have a user object or custom context #}
+                <div class="nav-session out">
+                    <a href="{% url 'login' %}{% if request.get_full_path != '/' %}?{% next 'this page' %}{% endif %}">
+                        {% trans "log in" %}
+                    </a>
+                </div>
+            {% endif %}
+        </div>
+        <div class="pull-right" data-nosnippet>
+            {% if user.is_authenticated %}
+                <div class="nav-settings">
+                    {% include './snippets/header_icon_settings.html' with label_at='sm,md,lg' %}
+                </div>
+                <div class="nav-profile">
+                    {% include './snippets/header_icon_profile.html' %}
+                </div>
+            {% elif user %} {# 500/403-CSRF error pages don't have a user object or custom context #}
+                <div class="nav-profile out">
+                    <a href="{% url 'register' %}{% if request.get_full_path != '/' %}?{% next 'this page' %}{% endif %}">
+                        {% trans "register" %}
+                    </a>
+                </div>
+            {% endif %}
+        </div>
+    </nav>
+    <div class="clearfix">&#x200B;</div>
+
+    <a name="{% trans "content-start" context "URL" %}" tabindex="-1"></a>
+    <div class="row">
+        <div class="col-md-12" id="title" role="heading" aria-level="1" data-nosnippet>
+            {% block hero_title %}Pasporta Servo{% endblock %}
+        </div>
+        <div class="col-md-12" id="subtitle" role="heading" aria-level="2">
+            {% block hero_subtitle %}{% trans "The famous hosting service for Esperanto-speakers" %}{% endblock %}
+        </div>
+    </div>
+
+    <div class="search-container{% block hero_content_class %}{% endblock %}">
+        {% block hero_content %}
+        <form class="search row" id="searchform" role="search" method="GET" action="{% url 'search' %}">
+            <div class="col-xs-12 col-sm-8 col-sm-offset-2">
+                <div class="form-group form-group-lg" data-nosnippet>
+                    <label class="sr-only" for="searchinput">{% trans "Search for a country, a region, or a city…" %}</label>
+                    <div class="input-group input-group-lg">
+                        <input class="form-control" type="search" id="searchinput" name="{{ SEARCH_FIELD_NAME }}"
+                               placeholder="{% trans "Search for a country, a region, or a city…" %}">
+                        <span class="input-group-btn">
+                            <button class="btn btn-default" type="submit" id="search">
+                                <span class="fa fa-search fa-lg" aria-hidden="true"></span>
+                                <span class="sr-only">{% trans "Search" %}</span>
+                            </button>
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </form>
+        {% endblock %}
+    </div>
+{% endblock header %}
+
+{% block page_role %}{% endblock %}
+
+{% block footer_role %}complementary{% endblock %}

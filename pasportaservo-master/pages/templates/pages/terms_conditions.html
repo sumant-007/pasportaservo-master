@@ -1,0 +1,18 @@
+{% extends 'core/base.html' %}
+{% load i18n static %}
+
+{% block head_title %}{% trans "Terms" %}{% endblock %}
+
+{% block page_class %} page{% endblock %}
+
+{% block page %}
+    <h1>{% trans "Conditions of Usage of Pasporta Servo" %}</h1>
+
+    {% for terms_condition in view.content %}
+        {% if terms_condition.strip %}
+            <blockquote>
+                {{ terms_condition.strip|safe }}
+            </blockquote>
+        {% endif %}
+    {% endfor %}
+{% endblock page %}

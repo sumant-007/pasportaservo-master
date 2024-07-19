@@ -1,0 +1,89 @@
+{% extends 'hosting/model_form.html' %}
+{% load i18n static variable %}
+{% load compact next from utils %}
+
+{% block head_title %}
+    {% if view.role >= roles.SUPERVISOR and profile %}
+        {% if profile.user_id %}
+            {# THIS IS A FULL PROFILE EDIT FORM, AND USER IS A SUPERVISOR OR ADMIN #}
+            {% trans "Update user's details" %}{% if profile.name %}: {{ profile.name }} {% else %} #{{ profile.id }} {% endif %}
+        {% else %}
+            {# THIS IS A FAMILY MEMBER EDIT FORM, AND USER IS A SUPERVISOR OR ADMIN #}
+            {% trans "Update a family member" %}
+        {% endif %}
+    {% elif profile %}
+        {% if user.profile != profile %}
+            {# THIS IS A FAMILY MEMBER EDIT FORM, AND USER IS THE OWNER OF THE CORRESPONDING PLACE #}
+            {% trans "Update a family member" %}
+        {% else %}
+            {# THIS IS A FULL PROFILE EDIT FORM, AND THE PROFILE BELONGS TO THIS USER #}
+            {% trans "Update my details" %}
+        {% endif %}
+    {% else %}
+        {% if request.user_has_profile or view.place %}
+            {# THIS IS A FAMILY MEMBER CREATE FORM #}
+            {% trans "Add a family member" %}
+        {% else %}
+            {# THIS IS A FULL PROFILE CREATE FORM (ONLY FOR THIS USER) #}
+            {% trans "My profile" %}
+        {% endif %}
+    {% endif %}
+{% endblock %}
+{% block head_title_separator %}
+    {% if not profile and not request.user_has_profile and not view.place %}
+        {% trans "at" %}
+    {% else %}
+        {{ block.super }}
+    {% endif %}
+{% endblock %}
+
+{% block extra_css %}
+        {{ block.super }}
+        <link rel="stylesheet" href="{% static 'popup/magnific-popup.min.css' %}">
+{% endblock %}
+{% block extra_js %}
+        {{ block.super }}
+        <script src="{% static 'popup/magnific-popup.min.js' %}"></script>
+{% endblock %}
+
+{% block page %}
+    {% asvar admin_submit_condition trimmed %}
+        {% if view.role == roles.ADMIN and not view.place %} True {% endif %}
+    {% endasvar %}
+    {{ block.super }}
+{% endblock %}
+
+{% block form_title %}
+    {% if view.place and view.role >= roles.SUPERVISOR %}
+        {{ view.place }} <hr />
+    {% endif %}
+{% endblock %}
+
+{% block form_block_class %} {% filter compact %}
+    profile-form
+    {% if view.role == roles.OWNER and not view.place %}
+        own-profile-form
+    {% endif %}
+{% endfilter %}{% endblock %}
+
+{% block enctype %}enctype='multipart/form-data'{% endblock %}
+
+{% block fields_after %}
+    {% if admin_submit_condition %}
+        <hr class="visible-xxs-block" />
+    {% endif %}
+{% endblock %}
+
+{% block form_back_link %}
+    {% if view.place %}
+    {# back button for family member form #}
+        {% url 'place_detail_verbose' view.place.pk as place_page_url %}
+        <a id="id_form_cancel" href="{% next 'next page' url_only=True default=place_page_url %}"
+           class="btn btn-default" title="{% trans "Back" %}">
+            <span class="fa fa-arrow-left" aria-hidden="true"></span>
+            <span class="hidden-xxs">{% trans "Back" %}</span>
+        </a>
+    {% endif %}
+{% endblock %}
+
+{% block form_submit_class %}{% if admin_submit_condition %} fullwidth-xxs{% endif %}{% endblock %}

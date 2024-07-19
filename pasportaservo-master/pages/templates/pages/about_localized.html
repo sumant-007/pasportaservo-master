@@ -1,0 +1,37 @@
+{% extends 'core/base.html' %}
+{% load i18n variable utils %}
+
+{% block head_title %}{{ flatpage.title }}{% endblock %}
+{% block head_title_separator %}:{% endblock %}
+{% block head_description %}
+    {% asvar all_content_lines %}
+        {% if "----" in flatpage.content %}
+            {{ flatpage.content|striptags|split:"----"|slice:'1:'|join:"" }}
+        {% else %}
+            {{ flatpage.content|striptags }}
+        {% endif %}
+    {% endasvar %}
+    {# Use the first heading as <meta description>. #}
+    {{ all_content_lines.strip|split:"NEWLINE"|slice:':1'|join:"" }}
+{% endblock %}
+
+{% block page_class %} page{% endblock %}
+
+{% block page %}
+    {% url 'about' as base_url %}
+    {% language 'eo' %}
+        {% url 'about' as about_flatpages_prefix %}
+    {% endlanguage %}
+    {% include './snippets/language_switcher.html' with base_url=base_url flatpages_prefix=about_flatpages_prefix %}
+
+    <hr class="visible-xs-block visible-sm-block" />
+
+    <div lang="{{ flatpage|content_page_language }}">
+        {% if "----" in flatpage.content %}
+            {# The first line of the content is used to provide a label for the language switcher. #}
+            {{ flatpage.content|split:"----"|slice:'1:'|join:"" }}
+        {% else %}
+            {{ flatpage.content }}
+        {% endif %}
+    </div>
+{% endblock page %}

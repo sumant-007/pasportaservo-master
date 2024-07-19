@@ -1,0 +1,236 @@
+{% extends 'account/settings.html' %}
+{% load i18n static crispy_forms_tags domain %}
+{% load next from utils %}
+{% load is_invalid clear_invalid from profile %}
+
+{% block head_title %}
+    {% if view.role == roles.OWNER %}
+        {% trans "Settings" %}
+    {% else %}
+        {% trans "Account" %} {% blocktrans with name=profile.name|default:profile.INCOGNITO %}of {{ name }}{% endblocktrans %}
+    {% endif %}
+{% endblock %}
+
+{% block extra_css %}
+        {{ block.super }}
+        <link rel="stylesheet" href="{% static 'toggle/bootstrap-toggle.min.css' %}">
+{% endblock %}
+
+{% block extra_js %}
+        {{ block.super }}
+        <script src="{% static 'toggle/bootstrap-toggle.min.js' %}"></script>
+        <script src="{% static 'js/settings.js' %}"></script>
+        <script src="{% static 'js/ajax.js' %}"></script>
+{% endblock %}
+
+
+{% block page_title %}
+        {% if view.role >= roles.SUPERVISOR %}
+            <span class="person-full-name">
+                {% if profile.first_name or profile.last_name %}
+                    {{ profile.get_fullname_display }}:
+                {% else %}
+                    {{ profile.INCOGNITO }} ({{ profile.user.username }}):
+                {% endif %}
+            </span>
+        {% endif %}
+        {% trans "Settings" %}
+{% endblock %}
+
+{% block account_alerts %}
+    {% if profile.deleted %}
+        <div class="alert alert-small alert-danger">
+            <span class="fa fa-exclamation-circle fa-spacer-right" aria-label="{% trans "Warning " context 'Title' %}"></span>
+            {% trans "Deleted profile" %}
+        </div>
+    {% endif %}
+{% endblock %}
+
+
+{% block account_email_actions %}
+    {% if view.role == roles.OWNER %}
+        <a href="{% url 'email_update' %}" class="btn btn-default btn-sm btn-vert-space-even">
+            {% trans "Update account email" %}
+        </a>
+        {% if account.email|is_invalid %}
+            <form action="{% url 'email_verify' %}" method="POST"
+                  class="unwrap-after-success" style="display: inline">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-default btn-sm btn-vert-space-even ajax"
+                        data-csrf="{{ csrf_token }}"
+                        data-success-text="{% trans "Awaiting verification..." %}"
+                        data-success-message="email-verification_notification"
+                        data-on-ajax-success="verifyEmailSuccess">
+                    {% trans "Re-verify address" %}
+                </button>
+                <div class="modal fade" id="email-verification_notification" tabindex="-1" role="dialog">
+                    <div class="modal-dialog" role="document">
+                        <div class="modal-content">
+                            <div class="modal-body help-block">
+                                <span class=""
+                                      data-notification="{% blocktrans trimmed %}
+                                                            We've sent a verification message to your email address.
+                                                            Please follow the instructions in the message to complete
+                                                            this step.
+                                                         {% endblocktrans %}">
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        {% endif %}
+    {% else %}
+        {% if not account.email|is_invalid %}
+            {% include './snippets/email_mark_invalid.html' with return_url='this page' %}
+        {% endif %}
+        <a href="{% url 'staff_email_update' profile.pk profile.autoslug %}" class="btn btn-default btn-sm btn-vert-space-even">
+            {% trans "Update account email" %}
+        </a>
+    {% endif %}
+{% endblock account_email_actions %}
+
+{% block profile_email %}
+    <section class="well well-sm" aria-label="{% trans "Public email address" %}">
+        <button type="button" data-target="#set-public-email" class="btn btn-primary btn-vert-space btn-xs" data-toggle="collapse">
+            {% trans "Public email?" %}
+        </button>
+        <div id="set-public-email" class="collapse when-scripting {% if profile.email %} in{% endif %}">
+            {% trans "[no email address]" as no_email %}
+            <samp><small>
+                {% if profile.email|is_invalid %}
+                    <span class="person-email-address text-danger" data-toggle="tooltip"
+                          title="{% trans "invalid email" %}" aria-label="{% trans "Warning " context 'Title' %}: {% trans "invalid email" %}">
+                        {{ profile.email|clear_invalid }}
+                        <span class="fa fa-exclamation-triangle" aria-hidden="true"></span>
+                    </span>
+                {% else %}
+                    <span class="person-email-address">{% firstof profile.email no_email %}</span>
+                {% endif %}
+            </small></samp> &nbsp;
+            <a href="{% url 'profile_email_update' profile.pk profile.autoslug %}?{% next 'this page' %}"
+               class="btn btn-default btn-sm btn-vert-space-even">
+                {% trans "Update public email" %}
+            </a>
+            <p class="help-block text-justify">{{ view.profile_email_help_text|linebreaksbr }}</p>
+        </div>
+    </section>
+{% endblock profile_email %}
+
+{% block profile_settings %}
+    {% if view.role >= roles.OWNER %}
+    <section class="callout callout-warning">
+        <h4 id="{% trans "privacy" context 'URL' %}">
+            {% trans "Privacy" %}
+            {% if privacy_matrix.read_only %}
+                &nbsp;<small><span class="label label-info" style="vertical-align: text-top">{% trans "Preview" context 'Title' %}</span></small>
+            {% endif %}
+        </h4>
+        <form id="privacy_form" action="{% url 'profile_privacy_update' profile.pk profile.autoslug %}" method="POST"
+              data-csrf="{% if not privacy_matrix.read_only %}{{ csrf_token }}{% endif %}">
+            <div class="suggest-adjust-screen well well-sm" aria-hidden="true">
+                <p class="help-block with-icon turn-device"
+                   style="min-height: 40px; background-image: url('{% get_static_prefix %}img/adjust-device{% if 'iPhone' in request.META.HTTP_USER_AGENT %}-i{% endif %}.png');"
+                   data-suggestion="{% trans "We recommend to turn your device on its side (and make sure orientation changes are allowed) to see the table better." %}">
+                </p>
+                <p class="help-block with-icon grow-window"
+                   style="min-height: 20px; background-image: url('{% static 'img/adjust-window.png' %}');"
+                   data-suggestion="{% trans "We recommend to make the browser window wider to see the table better." %}">
+                </p>
+                <p class="help-block slide-right"
+                   data-suggestion="{% trans "Slide the table to the right to see additional settings." %}">
+                </p>
+            </div>
+            <div class="privacy-matrix-container">
+                {% include './settings_privacy_matrix.html' %}
+            </div>
+            {% if view.role == roles.OWNER %}
+                <div class="privacy-checkbox">
+                    <span class="text-label-success small text-nowrap optinout-success" style="display: none"
+                          aria-role="status" data-notification="{% trans "saved" %}">
+                        <span class="fa fa-check" aria-hidden="true"></span>
+                        <span class="notification"></span>
+                    </span>
+                    {% crispy optinouts_form %}
+                    <a id="analytics_more_link" data-target="#analytics_more" data-toggle="collapse" style="cursor: help" class="requires-scripting">
+                        {% trans "More&nbsp;information about the measurement technologies." %}
+                    </a>
+                    <div class="collapse when-scripting" id="analytics_more">
+                        <div class="well well-sm">
+                            <div class="help-block">
+                                {% blocktrans trimmed %}
+                                    During some time we utilized the service of Google Analytics to collect and analyze
+                                    the data. Presently we do not measure interactions and so do not use any such service.
+                                {% endblocktrans %}
+                                {% comment %}
+                                    {% blocktrans trimmed %}
+                                    Currently we utilize the service of Google Analytics to collect anonymised information,
+                                    aggregating which helps us understand usage patterns and learn how to adjust the web
+                                    site. This information does not include any of your personal data. To enable the tool,
+                                    Google places monitoring cookies on your browser, containing a random number; by clearing
+                                    the checkbox above, the Google Analytics tool will be disabled for your account anywhere
+                                    you login.
+                                    {% endblocktrans %}
+                                {% endcomment %}
+                                &nbsp;
+                                <a href="{% url 'privacy_policy' %}#{% trans "measurement" context 'URL' %}"
+                                   role="button" class="btn btn-xs btn-warning">
+                                    {% trans "See our privacy policy." %}
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
+            {% if not privacy_matrix.read_only %}
+                {% csrf_token %}
+                <div class="pull-right">
+                    <button type="submit" class="btn btn-default" id="id_privacy_form_submit">
+                        {% trans "Save" %}
+                    </button>
+                </div><p class="clearfix"></p>
+            {% endif %}
+        </form>
+    </section>
+    {% endif %}
+{% endblock profile_settings %}
+
+{% block membership %}
+    {% if not profile.deleted %}
+        <section class="callout callout-danger">
+            <h4>{% if view.role == roles.OWNER %}{% trans "End my membership" %}{% else %}{% trans "End membership" %}{% endif %}</h4>
+            <a href="{% url 'profile_delete' profile.pk profile.autoslug %}"
+               class="btn btn-danger">
+                <span class="fa fa-trash fa-spacer-right" aria-hidden="true"></span>
+                {% if view.role == roles.OWNER %}{% trans "Close account" %}{% else %}{% trans "Delete profile" %}{% endif %}
+            </a>
+        </section>
+    {% elif view.role >= roles.SUPERVISOR %}
+        <section class="callout callout-success">
+            <h4>{% trans "Restore membership" %}</h4>
+            <a href="{% url 'profile_restore' profile.pk profile.autoslug %}"
+               class="btn btn-default">
+                <span class="fa fa-repeat fa-spacer-right" aria-hidden="true"></span>
+                {% trans "Restore account" %}
+            </a>
+        </section>
+    {% endif %}
+{% endblock membership %}
+
+
+{% block navigation %}
+    <hr class="sr-only" />
+    <div class="pull-left">
+        <a href="{% url 'profile_edit' profile.pk profile.autoslug %}" class="btn btn-default">
+            {% url 'profile_detail' profile.pk profile.autoslug as profile_url %}
+            {% domain profile_url as profile_absolute_url %}
+            {% if profile_absolute_url in request.META.HTTP_REFERER %}
+                <span class="fa fa-arrow-left" aria-hidden="true"></span>
+                <span>{% blocktrans with back_to=_("profile") %}Back to {{ back_to }}{% endblocktrans %}</span>
+            {% else %}
+                <span class="fa fa-arrow-right" aria-hidden="true"></span><span class="fa fa-user" aria-hidden="true"></span>
+                <span>{% blocktrans with fwd_to=_("profile") %}Forward to {{ fwd_to }}{% endblocktrans %}</span>
+            {% endif %}
+        </a>
+    </div>
+{% endblock %}

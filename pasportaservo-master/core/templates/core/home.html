@@ -1,0 +1,147 @@
+{% extends 'core/base_hero.html' %}
+{% load i18n static domain flatpages cache variable utils %}
+
+{% block content-at %}{% if view.news or view.right_block %}{% trans "whats-new" context "URL" %}{% else %}{{ block.super }}{% endif %}{% endblock %}
+{% block nav-skip-label %}{% trans "Jump to content" %}{% endblock %}
+
+{% block extra_head %}
+        <meta name="google-site-verification" content="WNSszF-XPUhHkWDgi_ArbSCn-U-bo1SfaFlVvk8w4xY" />
+        <script type="application/ld+json">
+            {
+                "@context": "https://schema.org",
+                "@type": "WebSite",
+                "url": "{% domain %}",
+                "potentialAction": {
+                    "@type": "SearchAction",
+                    "target": "{% domain %}{% url 'search' %}?{{ SEARCH_FIELD_NAME }}={search_term_string}",
+                    "query-input": "required name=search_term_string"
+                }
+            }
+        </script>
+{% endblock %}
+
+{% block pre-page %}
+    <section id="promo-pitch" class="container" role="note">
+         <div class="row">
+             <div class="col-xs-12 col-sm-8 col-sm-offset-2">
+                <div class="promo-contents help-block">
+                    {% trans "Stay for free in homes, host interesting people of all ages, practice your Esperanto." %}
+                    {% trans "Since 1974, thousands of travellers have used and are still using Pasporta Servo." %}
+                </div>
+             </div>
+         </div>
+    </section>
+    <section id="home-explore" class="container">
+         <div class="row">
+             <div class="col-xs-12 col-sm-8 col-sm-offset-2">
+                <div class="explore-action text-center small">
+                    <a href="{% url 'world_map' %}"><b>{% trans "Explore the map of the hosts" %}</b></a>
+                </div>
+             </div>
+         </div>
+    </section>
+
+    <section id="home-explain" class="container{% if view.news or view.right_block %} has-content{% endif %}" role="complementary">
+        <a name="{% trans "whats-new" context "URL" %}" tabindex="-1"></a>
+        <div class="row" data-nosnippet>
+            <div class="col-xs-12 col-md-6">
+                {% if view.news %}
+                    <h2 class="text-center">
+                        <strong><a href="{% url 'blog:posts' %}">{% trans "News" %}</a></strong>
+                    </h2>
+                    {% if view.right_block %}
+                        <a href="#{% trans "how-to-use" context "URL" %}" class="sr-only sr-only-focusable">
+                            {% trans "Skip the news" %}<span class="fa fa-regular fa-circle-right" aria-hidden="true" style="margin-left: 1.2ex"></span>
+                        </a>
+                    {% endif %}
+                {% endif %}
+                {% for post in view.news %}
+                    {% include 'blog/post.html' with post=post header_level=3 quote=True more_class='pull-right' more_type="dots" only %}
+                {% endfor %}
+            </div>
+
+            <div class="col-xs-12 col-md-5 col-md-offset-1">
+                <a name="{% trans "how-to-use" context "URL" %}" tabindex="-1"></a>
+                {{ view.right_block }}
+            </div>
+        </div>
+    </section>
+{% endblock pre-page %}
+
+{% block page_role %}toolbar{% endblock %}
+
+{% block page %}
+    <div class="social-links social-networks" data-nosnippet>
+        {% spaceless %}
+            {% with local_context=True %}
+                {% asvar url %}https://www.facebook.com/pasportaservo{% endasvar %}
+                {% asvar title %}Pasporta Servo {% trans "at" %} Facebook{% endasvar %}
+                {% include './snippets/social_link.html' with url=url title=title outline="fa-square" content="fa-brands fa-facebook-f" only %}
+            {% endwith %}
+            {% with local_context=True %}
+                {% asvar url %}https://esperanto.masto.host/@pasportaservo{% endasvar %}
+                {% asvar title %}Pasporta Servo {% trans "at" %} Mastodon{% endasvar %}
+                {% include './snippets/social_link.html' with url=url title=title outline="fa-square" content="fa-brands fa-mastodon" custom_content_size="25px" only %}
+            {% endwith %}
+            {% with local_context=True %}
+                {% asvar url %}https://pasportaservo.telegramo.org/{% endasvar %}
+                {% trans "Discuss Pasporta Servo on Telegram" as title %}
+                {% include './snippets/social_link.html' with url=url title=title outline="fa-square" content="fa-brands fa-telegram" only %}
+            {% endwith %}
+            {% with local_context=True %}
+                {% asvar url %}https://youtu.be/2bQnlDNoymg{% endasvar %}
+                {% trans "About Pasporta Servo, on YouTube" as title %}
+                {% include './snippets/social_link.html' with url=url title=title outline="fa-square" content="fa-brands fa-youtube" custom_content_size="22px" only %}
+            {% endwith %}
+        {% endspaceless %}
+    </div>
+    <div class="social-links social-contact" data-nosnippet>
+        {% spaceless %}
+            {% with local_context=True %}
+                {% asvar url %}mailto:{{ SUPPORT_EMAIL }}{% endasvar %}
+                {% trans "Contact us via email" as title %}
+                {% include './snippets/social_link.html' with url=url title=title outline="fa-square" content="fa-solid fa-at" only %}
+            {% endwith %}
+            {% with local_context=True %}
+                {% asvar url %}https://github.com/tejoesperanto/pasportaservo/discussions/categories/ideas{% endasvar %}
+                {% trans "Your ideas and suggestions" as title %}
+                {% dict icon="16px" hl="22px" content="6px" as size %}
+                {% asvar css_icon %} top: 1px; {% endasvar %}
+                {% asvar css_content %} top: -5px; {% endasvar %}
+                {% include './snippets/social_link.html' with url=url title=title outline="fa-lightbulb" content="fa-solid fa-circle" custom_size=size icon_css=css_icon content_css=css_content only %}
+            {% endwith %}
+            {% with local_context=True %}
+                {% asvar url %}https://github.com/tejoesperanto/pasportaservo{% endasvar %}
+                {% trans "Pasporta Servo's source code" as title %}
+                {% include './snippets/social_link.html' with url=url title=title outline="fa-square" content="fa-brands fa-github" only %}
+            {% endwith %}
+        {% endspaceless %}
+    </div>
+    <div class="social-support" data-nosnippet>
+        <a href="https://buymeacoffee.com/pasportaservo" target="_blank" rel="external noreferrer" class="btn btn-default fullwidth-xxs">
+            {% get_system_language as LANGUAGE_CODE %}
+            {% cache HOUR|mult:48 financial-support-button LANGUAGE_CODE user.pk %}
+                {% if not user_donations_count %}
+                    <span class="hidden-xxs visible-xs-inline visible-md-inline visible-lg-inline">
+                        {% trans "Support Pasporta Servo" %} <span class="sr-only">&ndash;</span>
+                    </span>
+                    <span class="fa fa-solid fa-mug-hot fa-lg text-brand fa-spacer-left fa-spacer-right" aria-hidden="true"></span>
+                    <span>{% trans "Buy a cup of coffee for us!" %}</span>
+                {% else %}
+                    <span>{% trans "Thank you for your support!" %}</span>
+                    {% asvar user_thanks trimmed %}
+                        {% if user_donations_count > 3 %}
+                            {{ "*"|mult:3 }}
+                        {% else %}
+                            {{ "*"|mult:user_donations_count }}
+                        {% endif %}
+                    {% endasvar %}
+                    {% for _ in user_thanks %}
+                        <span class="fa fa-solid fa-heart {% cycle "text-brand" "text-success" %} fa-spacer-left"
+                              {% if forloop.first %}aria-label="&#x2764;"{% else %}aria-hidden="true"{% endif %}></span>
+                    {% endfor %}
+                {% endif %}
+            {% endcache %}
+        </a>
+    </div>
+{% endblock page %}

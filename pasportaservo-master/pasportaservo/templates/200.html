@@ -1,0 +1,26 @@
+{% extends 'core/base_hero.html' %}
+{% load i18n %}
+{% load next from utils %}
+
+{% block hero_title %}200{% endblock %}
+{% block hero_subtitle %}{% trans "OK" %}{% if success_message %} : {{ success_message }}{% endif %}{% endblock %}
+
+{% block nav-skip %}{% endblock %}
+
+{% block hero_content %}
+    {% next 'next page' url_only=True as next_page_url %}
+    {% if next_page_url %}
+        <div class="row">
+            <div class="col-md-12" style="text-align: center; margin-bottom: 2em">
+                <a href="{{ next_page_url }}" class="btn btn-lg btn-default" tabindex="1">
+                    <span class="fa fa-arrow-left fa-spacer-right" aria-hidden="true"></span>
+                    {% trans "Back to previous page" %}
+                </a>
+            </div>
+        </div>
+    {% else %}
+        {{ block.super }}
+    {% endif %}
+{% endblock %}
+
+{% block hero_content_class %} hidden-print{% endblock %}

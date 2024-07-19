@@ -1,0 +1,78 @@
+{% load i18n %}
+{% load dict dict_insert from utils %}
+
+<!-- Inline styling for the map container. Note that only 1 map per page is possible. -->
+<style>
+    .map-widget {
+        {% if not admin_site %}
+            border: solid 1px #e3e3e3;
+            border-radius: 3px;
+            padding: 1px;
+        {% endif %}
+    }
+    #map {
+        text-align: initial;
+        height: {{ map_height }}px;
+    }
+    @media (max-width: 479px) {
+        #map { height: 250px };
+    }
+    .mapboxgl-marker {
+        /*
+        width: 1rem;
+        height: 1rem;
+        border-radius: 1rem;
+        background: #f71;
+        */
+    }
+    {% if not debug %}#{{ id }} { display: none; } {% endif %}
+    {% if admin_site %}
+        form .aligned #{{ id }} {
+            margin-left: 170px;
+        }
+    {% endif %}
+</style>
+
+<div class="map-widget"><div id="map"></div></div>
+<noscript>
+    <style>
+        .map-widget { display: none; }
+    </style>
+    <br />
+    <div class="alert alert-small alert-danger text-center">
+        {% trans "The map requires JavaScript and the WebGL technology." %}
+    </div>
+    <br />
+</noscript>
+
+<p class="{% if admin_site %}help{% else %}help-block{% endif %}">
+    {% trans "Select manually the most suitable point on the map." %}
+</p>
+{% if 'data-selectable-zoom' in widget.attrs %}
+    <p class="{% if admin_site %}help{% else %}help-block{% endif %}">
+        <span style="font-size: 90%; font-style: italic;">
+        {% blocktrans trimmed %}
+            It will be possible to register the point when the resolution
+            of the map allows for visible distances of about 1km or less.
+        {% endblocktrans %}
+        </span>
+    </p>
+{% endif %}
+
+{% dict id=id name=name as input_field_attrs %}
+{% for name, value in widget.attrs.items %}
+    {% if name|slice:":5" == "data-" %}
+        {% dict_insert input_field_attrs name value|stringformat:'s' %}
+    {% endif %}
+{% endfor %}
+{% if has_input_fallback %}
+    {% dict_insert input_field_attrs "type" "hidden" %}
+    <input {% for name, value in input_field_attrs.items %}{{ name }}="{{ value }}" {% endfor %}
+           value="{{ serialized }}" />
+{% else %}
+    {% dict_insert input_field_attrs "cols" 54 %}
+    {% dict_insert input_field_attrs "rows" 2 %}
+    <textarea class="required {{ widget.attrs.class }}{% if admin_site %} vTextField{% endif %}"
+              {% for name, value in input_field_attrs.items %}{{ name }}="{{ value }}" {% endfor %}
+    >{{ serialized }}</textarea>
+{% endif %}

@@ -1,0 +1,42 @@
+{
+    "name": "Pasporta Servo",
+    "short_name": "Pasporta Servo",
+    "icons": [
+        {
+            "src": "/static/img/marker/PS_android-36.png",
+            "sizes": "36x36",
+            "type": "image/png",
+            "density": 0.75
+        }, {
+            "src": "/static/img/marker/PS_android-48.png",
+            "sizes": "48x48",
+            "type": "image/png",
+            "density": 1.0
+        }, {
+            "src": "/static/img/marker/PS_android-72.png",
+            "sizes": "72x72",
+            "type": "image/png",
+            "density": 1.5
+        }, {
+            "src": "/static/img/marker/PS_android-96.png",
+            "sizes": "96x96",
+            "type": "image/png",
+            "density": 2.0
+        }, {
+            "src": "/static/img/marker/PS_android-144.png",
+            "sizes": "144x144",
+            "type": "image/png",
+            "density": 3.0
+        }, {
+            "src": "/static/img/marker/PS_android-192.png",
+            "sizes": "192x192",
+            "type": "image/png",
+            "density": 4.0
+        }
+    ],
+    "description": "Gastiga servo; tutmonda reto de esperantistoj–gastigantoj (kaj gastoj), konsistanta el adresaro de homoj el la tuta mondo, kiuj proponas la eblon gasti en iliaj hejmoj senpage · Hospitality service functioning in the Esperanto language and consisting of a world-wide network of hosts offering the option to stay in their homes for free.",
+    "lang": "Esperanto",
+    "start_url": "/profilo/?utm_source=web_app_manifest",
+    "display": "standalone",
+    "theme_color": "#ee6600"
+}
